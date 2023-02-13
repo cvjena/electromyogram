@@ -291,6 +291,7 @@ with gr.Blocks() as demo:
         with gr.Column():
             img_canvas = gr.Image(FACE_CANVAS, label="Face Canvas")
             img_face = gr.Image(FACE_IMG, label="Face Image")
+            gr.Markdown("Image Source: Bildunglizenz Adobestock 2023 - 35393559")
 
     for slider in sliders:
         slider.change(apply, inputs=[current, beta, show_face, show_mask], outputs=[img_canvas, img_face])
