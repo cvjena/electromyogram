@@ -65,7 +65,7 @@ def apply(current, beta, show_face, show_mask):
     ]
 
 
-with gr.Blocks() as demo:
+with gr.Blocks(css="footer {visibility: hidden}") as demo:
     sliders = []
     gr.Markdown("# sEMG Sensor Positioning")
 
