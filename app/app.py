@@ -15,6 +15,7 @@ FACE_IMG = np.array(Image.open("AdobeStock_35393559.jpeg"))[500:2000, 700:2000]
 
 WARPER = face_projection.Warper()
 # WARPER.set_scale(0.25)
+lms = WARPER.get_landmarks(FACE_IMG)
 
 SLIDERS_KURAMOTO = {}
 
@@ -51,22 +52,16 @@ def change_tab(tab):
     ]
 
 
-def apply(current, beta):
-    out_image = FACE_CANVAS.copy()
-    # draw the Frankfort horizontal plane
-    # plane_y = out_image.shape[0] // 2 + out_image.shape[0] // 8
-    # out_image = cv2.line(out_image, (0, plane_y), (out_image.shape[1], plane_y), (1, 1, 1), 10)
+def apply(current, beta, show_face, show_mask):
+    face_image = FACE_IMG.copy() if show_face else np.zeros_like(FACE_IMG)
+    mask_image_fully = electromyogram.plot_locations(FACE_CANVAS.copy(), FRIDLUND if current == "Fridlund" else KURAMOTO)
+    mask_image_empty = electromyogram.plot_locations(np.zeros_like(FACE_CANVAS), FRIDLUND if current == "Fridlund" else KURAMOTO)
 
-    if current == "Kuramoto":
-        out_image = electromyogram.plot_locations(out_image, KURAMOTO)
-    elif current == "Fridlund":
-        out_image = electromyogram.plot_locations(out_image, FRIDLUND)
-
-    out_face = WARPER.apply(FACE_IMG, np.array(out_image), beta=beta)
+    face_image = WARPER.apply(face_img=face_image, face_data=mask_image_fully if show_mask else mask_image_empty, landmarks=lms, beta=beta)
 
     return [
-        gr.Image.update(out_image),
-        gr.Image.update(out_face),
+        gr.Image.update(mask_image_fully),
+        gr.Image.update(face_image),
     ]
 
 
@@ -83,6 +78,8 @@ with gr.Blocks() as demo:
             with gr.Blocks():
                 current = gr.Dropdown(["Kuramoto", "Fridlund"], value="Kuramoto", label="Current Scheme", interactive=True)
                 beta = gr.Slider(0.1, 0.999, 0.8, label="Beta", interactive=True)
+                show_face = gr.Checkbox(True, label="Show Face", interactive=True)
+                show_mask = gr.Checkbox(True, label="Show Mask", interactive=True)
 
             with gr.Tab("Kuramoto", id=0):
                 with gr.Row():
@@ -296,17 +293,19 @@ with gr.Blocks() as demo:
             img_face = gr.Image(FACE_IMG, label="Face Image")
 
     for slider in sliders:
-        slider.change(apply, inputs=[current, beta], outputs=[img_canvas, img_face])
+        slider.change(apply, inputs=[current, beta, show_face, show_mask], outputs=[img_canvas, img_face])
 
-    force_update.click(apply, inputs=[current, beta], outputs=[img_canvas, img_face])
+    force_update.click(apply, inputs=[current, beta, show_face, show_mask], outputs=[img_canvas, img_face])
     save_locs.click(save_locations, inputs=current)
 
-    current.change(apply, inputs=[current, beta], outputs=[img_canvas, img_face])
-    beta.change(apply, inputs=[current, beta], outputs=[img_canvas, img_face])
+    current.change(apply, inputs=[current, beta, show_face, show_mask], outputs=[img_canvas, img_face])
+    show_face.change(apply, inputs=[current, beta, show_face, show_mask], outputs=[img_canvas, img_face])
+    show_mask.change(apply, inputs=[current, beta, show_face, show_mask], outputs=[img_canvas, img_face])
+    beta.change(apply, inputs=[current, beta, show_face, show_mask], outputs=[img_canvas, img_face])
 
     btn_reset.click(reset)
-    btn_reset.click(apply, inputs=[current, beta], outputs=[img_canvas, img_face])
-    demo.load(fn=apply, inputs=[current, beta], outputs=[img_canvas, img_face])
+    btn_reset.click(apply, inputs=[current, beta, show_face, show_mask], outputs=[img_canvas, img_face])
+    demo.load(fn=apply, inputs=[current, beta, show_face, show_mask], outputs=[img_canvas, img_face])
 
 if __name__ == "__main__":
     demo.launch(show_api=False, title="sEMG Sensor Positioning")
