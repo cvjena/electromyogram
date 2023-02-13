@@ -286,6 +286,17 @@ with gr.Blocks(css="footer {visibility: hidden}") as demo:
                     y.change(lambda y: FRIDLUND.locations.update({"Deprsup li": (FRIDLUND.locations["Deprsup li"][0], y)}), inputs=y)
                     y.change(lambda y: FRIDLUND.locations.update({"Deprsup re": (FRIDLUND.locations["Deprsup re"][0], y)}), inputs=y)
                     sliders.append(x), sliders.append(y)
+
+                with gr.Row():
+                    # Llsup
+                    x = gr.Number(FRIDLUND.locations["Llsup li"][0], label="Llsup x", interactive=True)
+                    x.change(lambda x: FRIDLUND.locations.update({"Llsup li": (x, FRIDLUND.locations["Llsup li"][1])}), inputs=x)
+                    x.change(lambda x: FRIDLUND.locations.update({"Llsup re": (-x, FRIDLUND.locations["Llsup re"][1])}), inputs=x)
+                    y = gr.Number(FRIDLUND.locations["Llsup li"][1], label="Llsup y", interactive=True)
+                    y.change(lambda y: FRIDLUND.locations.update({"Llsup li": (FRIDLUND.locations["Llsup li"][0], y)}), inputs=y)
+                    y.change(lambda y: FRIDLUND.locations.update({"Llsup re": (FRIDLUND.locations["Llsup re"][0], y)}), inputs=y)
+                    sliders.append(x), sliders.append(y)
+
             btn_reset = gr.Button("Reset")
 
         with gr.Column():
