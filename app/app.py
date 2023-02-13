@@ -53,11 +53,15 @@ def change_tab(tab):
 
 def apply(current, beta):
     out_image = FACE_CANVAS.copy()
+    # draw the Frankfort horizontal plane
+    # plane_y = out_image.shape[0] // 2 + out_image.shape[0] // 8
+    # out_image = cv2.line(out_image, (0, plane_y), (out_image.shape[1], plane_y), (1, 1, 1), 10)
+
     if current == "Kuramoto":
         out_image = electromyogram.plot_locations(out_image, KURAMOTO)
     elif current == "Fridlund":
         out_image = electromyogram.plot_locations(out_image, FRIDLUND)
-    # out_image = Image.fromarray(out_image).resize((WARPER.width(), WARPER.height()))
+
     out_face = WARPER.apply(FACE_IMG, np.array(out_image), beta=beta)
 
     return [
