@@ -51,3 +51,7 @@ MANIFEST
 # Per-project virtualenvs
 .venv*/
 .conda*/
+
+#jupyter
+.ipynb_checkpoints
+*.ipynb
