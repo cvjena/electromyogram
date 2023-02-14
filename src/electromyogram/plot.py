@@ -151,12 +151,13 @@ def plot(
     xy = np.array([scheme.locations[k] for k in keys_sorted_semg] + [scheme.outer_dict[k] for k in keys_sorted_hull])
     v = np.array([emg_values[k] for k in keys_sorted_semg] + [0] * len(keys_sorted_hull))
 
-    X = np.linspace(xy.min(axis=0)[0], xy.max(axis=0)[0], canvas.shape[0])
-    Y = np.linspace(xy.min(axis=0)[1], xy.max(axis=0)[1], canvas.shape[1])
+    # X = np.linspace(xy.min(axis=0)[0], xy.max(axis=0)[0], canvas.shape[0])
+    # Y = np.linspace(xy.min(axis=0)[1], xy.max(axis=0)[1], canvas.shape[1])
+    X = np.linspace(-100, 100, canvas.shape[0])
+    Y = np.linspace(-100, 100, canvas.shape[1])
     Y = np.flip(Y)
     X, Y = np.meshgrid(X, Y)
-
-    interp = interpolate.CloughTocher2DInterpolator(xy, v)
+    interp = interpolate.CloughTocher2DInterpolator(xy, v, fill_value=0, rescale=False)
     # interp = interpolate.LinearNDInterpolator(xy, v)
     # interp = interpolate.NearestNDInterpolator(xy, v)
 
