@@ -33,8 +33,6 @@ class Scheme(abc.ABC):
         self.outer_hull = np.array([abs_to_rel(x, y, (4096, 4096)) for x, y in self.outer_hull])
         self.outer_dict = {f"O{i}": (x, y) for i, (x, y) in enumerate(self.outer_hull)}
 
-        self.__lut: dict[str, np.ndarray] = {}
-
     def check(self, emg_values: dict[str, float]) -> bool:
         # check if all values are inside the dict
         # and if they are in the correct range
@@ -163,8 +161,8 @@ def plot(
     # interp = interpolate.NearestNDInterpolator(xy, v)
 
     Z = interp(X, Y)
-    Z = (Z - np.nanmin(Z)) / (np.nanmax(Z) - np.nanmin(Z)) * 255
-    Z = Z.astype(np.uint8)
+    Z = (Z - np.nanmin(Z)) / (np.nanmax(Z) - np.nanmin(Z))
+    Z = (Z * 255).astype(np.uint8)
     Z = cv2.applyColorMap(Z, cv2.COLORMAP_VIRIDIS)
     Z = cv2.cvtColor(Z, cv2.COLOR_BGR2RGB)
     return Z
