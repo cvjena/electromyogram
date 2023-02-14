@@ -1,3 +1,3 @@
-__all__ = ["plot_locations", "Kuramoto", "Fridlund"]
+__all__ = ["plot", "plot_locations", "Kuramoto", "Fridlund"]
 
-from electromyogram.plot import Fridlund, Kuramoto, plot_locations
+from electromyogram.plot import Fridlund, Kuramoto, plot, plot_locations
