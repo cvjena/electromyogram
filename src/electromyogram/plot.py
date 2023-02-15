@@ -151,24 +151,17 @@ def plot(
     xy = np.array([scheme.locations[k] for k in keys_sorted_semg] + [scheme.outer_dict[k] for k in keys_sorted_hull])
     v = np.array([emg_values[k] for k in keys_sorted_semg] + [0] * len(keys_sorted_hull))
 
-    # X = np.linspace(xy.min(axis=0)[0], xy.max(axis=0)[0], canvas.shape[0])
-    # Y = np.linspace(xy.min(axis=0)[1], xy.max(axis=0)[1], canvas.shape[1])
+    vmax = max(emg_values.values())
+
     X = np.linspace(-100, 100, canvas.shape[0])
     Y = np.linspace(-100, 100, canvas.shape[1])
     Y = np.flip(Y)
     X, Y = np.meshgrid(X, Y)
     interp = interpolate.CloughTocher2DInterpolator(xy, v, fill_value=0, rescale=False)
-    # interp = interpolate.LinearNDInterpolator(xy, v)
-    # interp = interpolate.NearestNDInterpolator(xy, v)
-
-    # Z = interp(X, Y)
-    # Z = (Z - np.nanmin(Z)) / (np.nanmax(Z) - np.nanmin(Z))
-    # Z = (Z * 255).astype(np.uint8)
-    # Z = cv2.applyColorMap(Z, cv2.COLORMAP_VIRIDIS)
-    # Z = cv2.cvtColor(Z, cv2.COLOR_BGR2RGB)
     Z = interp(X, Y)
     # all values smaller than 0 are set to 0
     Z[Z < 0] = 0
+    Z = Z / Z.max() * vmax
     return Z
 
 
