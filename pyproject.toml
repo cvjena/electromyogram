@@ -10,3 +10,7 @@ version_scheme = "no-guess-dev"
 
 [tool.black]
 line-length = 160
+
+[tool.ruff]
+# Ruff configuration
+line-length = 160
