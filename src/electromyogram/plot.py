@@ -33,7 +33,7 @@ class Scheme(abc.ABC):
         self.outer_hull = np.array([abs_to_rel(x, y, (4096, 4096)) for x, y in self.outer_hull])
         self.outer_dict = {f"O{i}": (x, y) for i, (x, y) in enumerate(self.outer_hull)}
 
-    def check(self, emg_values: dict[str, float]) -> bool:
+    def valid(self, emg_values: dict[str, float]) -> bool:
         # check if all values are inside the dict
         # and if they are in the correct range
         temp_locations = self.locations.copy()
@@ -141,8 +141,10 @@ def plot(
     emg_values: dict[str, float],
     shape: tuple[int, int] = (1024, 1024),
 ) -> np.ndarray:
-    if canvas is None:
-        canvas = np.zeros((*shape, 1), dtype=np.float32)
+    if not scheme.valid(emg_values):
+        raise ValueError("Either missing or invalid EMG keys/values in dict")
+
+    canvas = canvas or np.zeros(shape, dtype=np.float32)
 
     keys_sorted_semg = sorted(scheme.locations.keys())
     keys_sorted_hull = sorted(scheme.outer_dict.keys())
