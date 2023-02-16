@@ -153,10 +153,13 @@ def plot(
     xy = np.array([scheme.locations[k] for k in keys_sorted_semg] + [scheme.outer_dict[k] for k in keys_sorted_hull])
     v = np.array([emg_values[k] for k in keys_sorted_semg] + [0] * len(keys_sorted_hull))
 
-    X = np.linspace(-100, 100, canvas.shape[0])
-    Y = np.linspace(-100, 100, canvas.shape[1])[::-1]
-    X, Y = np.meshgrid(X, Y)
-    Z = interpolate.CloughTocher2DInterpolator(xy, v, fill_value=0, rescale=False)(X, Y)
+    # prepare the data for RBF interpolation
+    p = xy.reshape(-1, 2)
+    v = v.reshape(-1, 1)
+    x_grid = np.mgrid[-100 : 100 : canvas.shape[0] * 1j, -100 : 100 : canvas.shape[1] * 1j].reshape(2, -1).T
+    Z = interpolate.RBFInterpolator(p, v, kernel="thin_plate_spline", smoothing=0.1)(x_grid)
+    # reshape the data to the correct shape, and transpose it such it is rotated 90 degrees counter-clockwise
+    Z = np.rot90(Z.reshape(canvas.shape[0], canvas.shape[1]))
     # all values smaller than 0 are set to 0
     Z[Z < 0] = 0
     Z /= Z.max()
