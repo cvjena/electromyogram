@@ -1,4 +1,4 @@
-__all__ = ["plot", "plot_locations", "Kuramoto", "Fridlund", "colorize"]
+__all__ = ["plot", "plot_locations", "Kuramoto", "Fridlund", "colorize", "get_colormap"]
 
 import abc
 import datetime
@@ -165,21 +165,7 @@ def plot(
     return Z
 
 
-def cv2_colormap(
-    electromyogram: np.ndarray,
-    cmap_code: int,
-) -> np.ndarray:
-    if electromyogram.dtype != np.uint8:
-        raise ValueError("electromyogram must be of type np.uint8")
-
-    return cv2.cvtColor(
-        cv2.applyColorMap(electromyogram, colormap=cmap_code),
-        cv2.COLOR_BGR2RGB,
-    )
-
-
-def apply_custom_colormap(
-    electromyogram: np.ndarray,
+def get_colormap(
     cmap_name: Union[str, object],
 ) -> np.ndarray:
     try:
@@ -207,7 +193,11 @@ def apply_custom_colormap(
             raise ValueError(f"{cmap_name} is not a valid colormap class in palettable")
     else:
         raise ValueError(f"{cmap_name} does not have a valid colormap name or class")
-    # remove the alpha channel
+    return colormap
+
+
+def apply_colormap(electromyogram: np.ndarray, colormap) -> np.ndarray:
+    # TODO later support alpha channel
     return (colormap(electromyogram)[..., :3] * 255).astype(np.uint8)
 
 
@@ -215,7 +205,7 @@ def colorize(
     electromyogram: np.ndarray,
     vmin: float,
     vmax: float,
-    cmap: Union[int, str, Type] = cv2.COLORMAP_VIRIDIS,
+    cmap: Union[str, Type] = cv2.COLORMAP_VIRIDIS,
 ) -> np.ndarray:
     """Colorize an electromyogram using a given colormap
 
@@ -241,8 +231,8 @@ def colorize(
     if electromyogram.ndim == 3:
         raise ValueError("electromyogram must be 2-dimensional")
 
-    if not isinstance(cmap, int) and not isinstance(cmap, str) and not isinstance(cmap, object):
-        raise ValueError(f"colormap must be either an int or a string and not {type(cmap)}")
+    if not isinstance(cmap, str) and not isinstance(cmap, object):
+        raise ValueError(f"colormap must be either a string and not {type(cmap)}")
 
     if np.max(electromyogram) > vmax or np.min(electromyogram) < vmin:
         raise ValueError("electromyogram values are outside of the range [vmin, vmax]")
@@ -253,7 +243,4 @@ def colorize(
     # scale the values to the range [0, 255]
     electromyogram = (electromyogram * 255).astype(np.uint8)
 
-    if isinstance(cmap, int):
-        return cv2_colormap(electromyogram, cmap)
-
-    return apply_custom_colormap(electromyogram, cmap)
+    return apply_colormap(electromyogram, get_colormap(cmap))
