@@ -206,7 +206,7 @@ def colorize(
     electromyogram: np.ndarray,
     vmin: float,
     vmax: float,
-    cmap: Union[str, Type] = cv2.COLORMAP_VIRIDIS,
+    cmap: Union[str, Type] = "viridis",
 ) -> np.ndarray:
     """Colorize an electromyogram using a given colormap
 
@@ -218,7 +218,7 @@ def colorize(
         electromyogram (np.ndarray): The electromyogram to colorize
         vmin (float): The minimum value of the electromyogram
         vmax (float): The maximum value of the electromyogram
-        colormap (Union[int, str], optional): The colormap to use. Defaults to cv2.COLORMAP_VIRIDIS.
+        colormap (Union[int, str], optional): The colormap to use. Defaults to "viridis".
 
     Raises:
         ValueError: If the electromyogram is not 2-dimensional
