@@ -104,17 +104,38 @@ def abs_to_rel(abs_x: int, abs_y: int, size: tuple[int, int]) -> tuple[float, fl
 
 def plot_locations(
     scheme: Scheme,
-    shape: tuple[int, int] = (256, 256),
+    shape: tuple[int, int] = (512, 512),
     draw_outer_hull: bool = True,
-):
+) -> np.ndarray:
+    """Plot the locations of the EMG values on a 2D canvas.
+
+    This function is used to plot the locations of the EMG values on a 2D canvas.
+    It visualizes the locations of the EMG values and the outer hull of the face.
+
+    Parameters
+    ----------
+    scheme : Scheme
+        The scheme to use for plotting the EMG values.
+    shape : tuple[int, int], optional
+        The shape of the canvas, by default (512, 512)
+    draw_outer_hull : bool, optional
+        Whether to draw the outer hull of the face, by default True
+
+    Returns
+    -------
+    np.ndarray
+        The canvas with the plotted EMG values.
+    """
     canvas = np.zeros((*shape, 3), dtype=np.uint8)
 
-    fontFace = cv2.FONT_HERSHEY_SIMPLEX
-    fontScale = 2  # Tode make depend on size
-    thickness = 8  # Tode make depend on size
-    radius = 50  # Tode make depend on size
+    scale_factor = shape[0] / DEFAULT_SIZE_PX
 
-    def _draw(img, text, x, y, color=(0, 0, 255)):
+    fontFace = cv2.FONT_HERSHEY_SIMPLEX
+    fontScale = 2 * scale_factor
+    thickness = int(8 * scale_factor)
+    radius = int(50 * scale_factor)
+
+    def _draw(img: np.ndarray, text: str, x: int, y: int, color: tuple = (0, 0, 255)):
         cv2.circle(img, (x, y), radius, color, -1)
         text_size, _ = cv2.getTextSize(text, fontFace, fontScale, thickness)
         text_x = x - text_size[0] // 2
