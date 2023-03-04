@@ -56,7 +56,6 @@ MANIFEST
 .ipynb_checkpoints
 *.ipynb
 
-*.json
 app/data
 temp_results
 tools/
