@@ -155,22 +155,48 @@ def plot_locations(
 
 
 def interpolate(
-    canvas: Optional[np.ndarray],
     scheme: Scheme,
     emg_values: dict[str, float],
-    shape: tuple[int, int] = (1024, 1024),
+    shape: tuple[int, int] = (512, 512),
+    vmin: float = 0.0,
+    vmax: Optional[float] = None,
 ) -> np.ndarray:
+    """Interpolate the EMG values to a 2D canvas.
+
+    This function is used to interpolate the EMG values to a 2D canvas based on the given scheme.
+    We use a RBF interpolation to interpolate the EMG values to the canvas.
+
+    Parameters
+    ----------
+    scheme : Scheme
+        The scheme to use for interpolation.
+        Currently only the `Kuramoto` und `Fridlund` scheme are supported.
+    emg_values : dict[str, float]
+        The EMG values to interpolate.
+        The keys of the dict need to match the keys of the scheme.
+    shape : tuple[int, int], optional
+        The shape of the canvas, by default (512, 512)
+    vmin : float
+        The minimum value of the EMG values. Defaults to 0.0.
+    vmax : Optional[float]
+        The maximum value of the EMG values. Defaults to None and will be set to the maximum value of the EMG values.
+    """
+
+    # TODO add the mirror options as discussed in the last meeting, maybe should be a separate function
+    #      which calls this one with the prepared values!
     if not scheme.valid(emg_values):
         raise ValueError("Either missing or invalid EMG keys/values in dict")
 
-    canvas = canvas or np.zeros(shape, dtype=np.float32)
-
+    canvas = np.zeros(shape, dtype=np.float32)
     keys_sorted_semg = sorted(scheme.locations.keys())
     keys_sorted_hull = sorted(scheme.outer_dict.keys())
 
     # # get the values for each location
     xy = np.array([scheme.locations[k] for k in keys_sorted_semg] + [scheme.outer_dict[k] for k in keys_sorted_hull])
     v = np.array([emg_values[k] for k in keys_sorted_semg] + [0] * len(keys_sorted_hull))
+
+    vmin = vmin or v.min()
+    vmax = vmax or v.max()
 
     # prepare the data for RBF interpolation
     p = xy.reshape(-1, 2)
@@ -180,9 +206,9 @@ def interpolate(
     # reshape the data to the correct shape, and transpose it such it is rotated 90 degrees counter-clockwise
     Z = np.rot90(Z.reshape(canvas.shape[0], canvas.shape[1]))
     # all values smaller than 0 are set to 0
-    Z[Z < 0] = 0
-    Z /= Z.max()
-    return Z * v.max()
+    Z[Z < vmin] = vmin
+    Z = (Z - vmin) / (Z.max() - vmin)  # normalize the values to the range [0, 1]
+    return Z * vmax
 
 
 def get_colormap(
