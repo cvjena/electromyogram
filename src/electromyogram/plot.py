@@ -103,34 +103,32 @@ def abs_to_rel(abs_x: int, abs_y: int, size: tuple[int, int]) -> tuple[float, fl
 
 
 def plot_locations(
-    canvas: Optional[np.ndarray],
     scheme: Scheme,
-    draw_outer_hull: bool = True,
     shape: tuple[int, int] = (256, 256),
+    draw_outer_hull: bool = True,
 ):
-    if canvas is None:
-        canvas = np.zeros((*shape, 3), dtype=np.float32)
+    canvas = np.zeros((*shape, 3), dtype=np.uint8)
+
+    fontFace = cv2.FONT_HERSHEY_SIMPLEX
+    fontScale = 2  # Tode make depend on size
+    thickness = 8  # Tode make depend on size
+    radius = 50  # Tode make depend on size
+
+    def _draw(img, text, x, y, color=(0, 0, 255)):
+        cv2.circle(img, (x, y), radius, color, -1)
+        text_size, _ = cv2.getTextSize(text, fontFace, fontScale, thickness)
+        text_x = x - text_size[0] // 2
+        text_y = y + text_size[1] // 2
+        cv2.putText(img, text, (text_x, text_y), fontFace, fontScale, (255, 255, 255), thickness)
 
     for emg_name, emg_loc in scheme.locations.items():
         x, y = rel_to_abs(emg_loc[0], emg_loc[1], canvas.shape)
-        cv2.circle(canvas, (x, y), 50, (0, 0, 255), -1)
-
-        text_size, _ = cv2.getTextSize(str(emg_name), cv2.FONT_HERSHEY_SIMPLEX, 2, 8)
-        text_x = x - text_size[0] // 2
-        text_y = y + text_size[1] // 2
-
-        cv2.putText(canvas, str(emg_name), (text_x, text_y), cv2.FONT_HERSHEY_SIMPLEX, 2, (255, 255, 255), 8)
+        _draw(canvas, emg_name, x, y)
 
     if draw_outer_hull:
         for name, loc in scheme.outer_dict.items():
             x, y = rel_to_abs(loc[0], loc[1], canvas.shape)
-            cv2.circle(canvas, (x, y), 50, (0, 255, 0), -1)
-
-            text_size, _ = cv2.getTextSize(str(name), cv2.FONT_HERSHEY_SIMPLEX, 2, 8)
-            text_x = x - text_size[0] // 2
-            text_y = y + text_size[1] // 2
-
-            cv2.putText(canvas, str(name), (text_x, text_y), cv2.FONT_HERSHEY_SIMPLEX, 2, (255, 255, 255), 8)
+            _draw(canvas, name, x, y, color=(0, 255, 0))
 
     return canvas
 
