@@ -1,4 +1,4 @@
-__all__ = ["plot", "plot_locations", "Kuramoto", "Fridlund", "colorize", "get_colormap"]
+__all__ = ["interpolate", "plot_locations", "Kuramoto", "Fridlund", "colorize", "get_colormap"]
 
 import abc
 import datetime
@@ -8,7 +8,7 @@ from typing import Optional, Type, Union
 
 import cv2
 import numpy as np
-from scipy import interpolate
+from scipy import interpolate as interp
 
 from . import consts
 
@@ -154,7 +154,7 @@ def plot_locations(
     return canvas
 
 
-def plot(
+def interpolate(
     canvas: Optional[np.ndarray],
     scheme: Scheme,
     emg_values: dict[str, float],
@@ -176,7 +176,7 @@ def plot(
     p = xy.reshape(-1, 2)
     v = v.reshape(-1, 1)
     x_grid = np.mgrid[-100 : 100 : canvas.shape[0] * 1j, -100 : 100 : canvas.shape[1] * 1j].reshape(2, -1).T
-    Z = interpolate.RBFInterpolator(p, v, kernel="thin_plate_spline", smoothing=0.1)(x_grid)
+    Z = interp.RBFInterpolator(p, v, kernel="thin_plate_spline", smoothing=0.1)(x_grid)
     # reshape the data to the correct shape, and transpose it such it is rotated 90 degrees counter-clockwise
     Z = np.rot90(Z.reshape(canvas.shape[0], canvas.shape[1]))
     # all values smaller than 0 are set to 0
