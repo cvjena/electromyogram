@@ -248,22 +248,22 @@ def apply_colormap(electromyogram: np.ndarray, colormap) -> np.ndarray:
 
 
 def colorize(
-    electromyogram: np.ndarray,
-    vmin: float,
-    vmax: float,
-    cmap: Union[str, Type] = "viridis",
+    interpolation: np.ndarray,
+    cmap: Optional[Union[str, Type]] = "viridis",
+    vmin: Optional[float] = None,
+    vmax: Optional[float] = None,
 ) -> np.ndarray:
-    """Colorize an electromyogram using a given colormap
+    """Colorize an electromyogram interpolation using a given colormap
 
     The colormap can be either a string or an int. If it is a string, it must be a valid
     supported colormap name. If it is an int, it must be a valid OpenCV colormap code.
     eg. cv2.COLORMAP_VIRIDIS
 
     Args:
-        electromyogram (np.ndarray): The electromyogram to colorize
-        vmin (float): The minimum value of the electromyogram
-        vmax (float): The maximum value of the electromyogram
+        electromyogram (np.ndarray): The electromyogram interpolation to colorize
         colormap (Union[int, str], optional): The colormap to use. Defaults to "viridis".
+        vmin (Optional[float]): The minimum value of the electromyogram, defaults to the minimum value of the electromyogram
+        vmax (Optional[float]): The maximum value of the electromyogram, defaults to the maximum value of the electromyogram
 
     Raises:
         ValueError: If the electromyogram is not 2-dimensional
@@ -274,19 +274,24 @@ def colorize(
         np.ndarray: The colorized electromyogram (np.uint8)
     """
 
-    if electromyogram.ndim == 3:
+    if interpolation.ndim == 3:
         raise ValueError("electromyogram must be 2-dimensional")
 
     if not isinstance(cmap, str) and not isinstance(cmap, object):
         raise ValueError(f"colormap must be either a string and not {type(cmap)}")
 
-    if np.max(electromyogram) > vmax or np.min(electromyogram) < vmin:
+    if vmin is None:
+        vmin = np.min(interpolation)
+    if vmax is None:
+        vmax = np.max(interpolation)
+
+    if np.max(interpolation) > vmax or np.min(interpolation) < vmin:
         raise ValueError("electromyogram values are outside of the range [vmin, vmax]")
 
     # normalize the values between vmin and vmax
-    electromyogram = (electromyogram - vmin) / (vmax - vmin)
+    interpolation = (interpolation - vmin) / (vmax - vmin)
 
     # scale the values to the range [0, 255]
-    electromyogram = (electromyogram * 255).astype(np.uint8)
+    interpolation = (interpolation * 255).astype(np.uint8)
 
-    return apply_colormap(electromyogram, get_colormap(cmap))
+    return apply_colormap(interpolation, get_colormap(cmap))
