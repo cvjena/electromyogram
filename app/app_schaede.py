@@ -56,8 +56,8 @@ def visualize(
         if not use_global:
             vmin = 0
             vmax = max(data["val"].values())
-        plot = electromyogram.plot(None, scheme=scheme, emg_values=data["val"], shape=SIZE)
-        plot = electromyogram.colorize(plot, vmin=vmin, vmax=vmax, cmap=colormap)
+        intr = electromyogram.interpolate(scheme=scheme, emg_values=data["val"], shape=SIZE)
+        plot = electromyogram.colorize(intr, vmin=vmin, vmax=vmax, cmap=colormap)
 
         temp = cv2.resize(data["img"], SIZE)
         if blackandwhite:
