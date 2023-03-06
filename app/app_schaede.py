@@ -78,10 +78,15 @@ def visualize(
             temp = cv2.cvtColor(temp, cv2.COLOR_GRAY2BGR)
 
         empty = np.zeros_like(temp) if not white_background else np.ones_like(temp) * 255
-        warp_face = WARPER.apply(temp, img_data=colorized[0], beta=beta)
-        warp_zero = WARPER.apply(empty, img_data=colorized[0], beta=1.0)
 
-        plot = cv2.hconcat([temp, *colorized, warp_zero, warp_face])
+        if mirror:
+            warp_face = [WARPER.apply(temp, img_data=i, beta=beta) for i in colorized]
+            warp_zero = [WARPER.apply(empty, img_data=i, beta=1.0) for i in colorized]
+        else:
+            warp_face = [WARPER.apply(temp, img_data=colorized[0], beta=beta)]
+            warp_zero = [WARPER.apply(empty, img_data=colorized[0], beta=1.0)]
+
+        plot = cv2.hconcat([temp, *colorized, *warp_zero, *warp_face])
         movements.append(plot)
 
     new_image = cv2.vconcat(movements)
@@ -98,7 +103,7 @@ with gr.Blocks(css="footer {visibility: hidden}") as demo:
 
             scheme = gr.Dropdown(
                 ["Fridlund", "Kuramoto"],
-                value="Kuramoto",
+                value="Fridlund",
                 label="Scheme",
             )
             colormap = gr.Dropdown(["viridis", "plasma", "inferno", "magma", "jet", "bone", "parula"], value="parula", label="Colormap")
