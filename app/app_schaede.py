@@ -27,8 +27,6 @@ WARPER = face_projection.Warper()
 scheme_fri = electromyogram.Fridlund()
 scheme_kur = electromyogram.Kuramoto()
 
-# todo mirroring
-
 
 def visualize(
     scheme: str,
@@ -79,8 +77,9 @@ def visualize(
             temp = cv2.cvtColor(temp, cv2.COLOR_BGR2GRAY)
             temp = cv2.cvtColor(temp, cv2.COLOR_GRAY2BGR)
 
+        empty = np.zeros_like(temp) if not white_background else np.ones_like(temp) * 255
         warp_face = WARPER.apply(temp, img_data=colorized[0], beta=beta)
-        warp_zero = WARPER.apply(np.zeros_like(temp), img_data=colorized[0], beta=1.0)
+        warp_zero = WARPER.apply(empty, img_data=colorized[0], beta=1.0)
 
         plot = cv2.hconcat([temp, *colorized, warp_zero, warp_face])
         movements.append(plot)
@@ -94,14 +93,18 @@ with gr.Blocks(css="footer {visibility: hidden}") as demo:
     gr.Markdown("# Schaede Visualization")
 
     with gr.Row():
-        with gr.Column():
+        with gr.Column(scale=1):
             gr.Markdown("## Visualization Settings")
 
-            scheme = gr.Dropdown(["Fridlund", "Kuramoto"], value="Kuramoto", label="Scheme")
-            beta = gr.Slider(0.0, 0.999, 0.4, label="Beta")
+            scheme = gr.Dropdown(
+                ["Fridlund", "Kuramoto"],
+                value="Kuramoto",
+                label="Scheme",
+            )
             colormap = gr.Dropdown(["viridis", "plasma", "inferno", "magma", "jet", "bone", "parula"], value="parula", label="Colormap")
+            beta = gr.Slider(0.0, 0.999, 0.4, label="Beta")
             white_background = gr.Checkbox(False, label="White Background")
-            blackandwhite = gr.Checkbox(False, label="Black and White")
+            blackandwhite = gr.Checkbox(False, label="Black and White (Schaede only)")
             use_global = gr.Checkbox(False, label="Use Global")
             size = gr.Slider(minimum=128, maximum=2048, step=128, value=256, label="Size")
 
@@ -114,7 +117,7 @@ with gr.Blocks(css="footer {visibility: hidden}") as demo:
 
             btn = gr.Button("Visualize", variant="primary")
 
-        with gr.Column():
+        with gr.Column(scale=2):
             gr.Markdown("## Visualization")
             vis_img = gr.Image(schaede_img["Neutral"]["img"], label="Visualization")
 
