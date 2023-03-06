@@ -1,4 +1,4 @@
-__all__ = ["interpolate", "plot_locations", "Kuramoto", "Fridlund", "colorize", "get_colormap"]
+__all__ = ["interpolate", "plot_locations", "Kuramoto", "Fridlund", "colorize", "get_colormap", "mirrored_interpolate"]
 
 import abc
 import datetime
@@ -70,29 +70,23 @@ class Scheme(abc.ABC):
 
         vals_left = {}
         # mirror the values, i.e. swap the left and right values
-        for movement, emg_dict in emg_values.items():
-            temp = {}
-            for emg_name, emg_value in emg_dict.items():
-                if emg_name in self.pairs_R:
-                    name_left = self.pairs_L[self.pairs_R.index(emg_name)]
-                    left_val = emg_dict[name_left]
-                    temp[emg_name] = left_val
-                else:
-                    temp[emg_name] = emg_value
-            vals_left[movement] = temp
+        for emg_name, emg_value in emg_values.items():
+            if emg_name in self.pairs_R:
+                name_left = self.pairs_L[self.pairs_R.index(emg_name)]
+                left_val = emg_values[name_left]
+                vals_left[emg_name] = left_val
+            else:
+                vals_left[emg_name] = emg_value
 
         vals_right = {}
         # mirror the values, i.e. swap the left and right values
-        for movement, emg_dict in emg_values.items():
-            temp = {}
-            for emg_name, emg_value in emg_dict.items():
-                if emg_name in self.pairs_L:
-                    name_right = self.pairs_R[self.pairs_L.index(emg_name)]
-                    right_val = emg_dict[name_right]
-                    temp[emg_name] = right_val
-                else:
-                    temp[emg_name] = emg_value
-            vals_right[movement] = temp
+        for emg_name, emg_value in emg_values.items():
+            if emg_name in self.pairs_L:
+                name_right = self.pairs_R[self.pairs_L.index(emg_name)]
+                right_val = emg_values[name_right]
+                vals_right[emg_name] = right_val
+            else:
+                vals_right[emg_name] = emg_value
 
         return vals_left, vals_right
 
@@ -344,7 +338,23 @@ def colorize(
     return apply_colormap(interpolation, get_colormap(cmap))
 
 
-def mirrored(
-    scheme: Scheme, emg_values: dict[str, float], shape: tuple[int, int] = (512, 512), vmin: float = 0.0, vmax: Optional[float] = None
+def mirrored_interpolate(
+    scheme: Scheme,
+    emg_values: dict[str, float],
+    shape: tuple[int, int] = (512, 512),
+    vmin: float = 0.0,
+    vmax: Optional[float] = None,
+    middle_plane_width: int = 2,
 ) -> tuple[np.array, np.array, np.array]:
-    pass
+    emg_values_mirrored_l, emg_values_mirrored_r = scheme.mirror(emg_values)
+
+    interpolation_n = interpolate(scheme, emg_values, shape, vmin, vmax)
+    interpolation_l = interpolate(scheme, emg_values_mirrored_l, shape, vmin, vmax)
+    interpolation_r = interpolate(scheme, emg_values_mirrored_r, shape, vmin, vmax)
+
+    # draw a vertical line in the mirrored images to indicate the mirror plane
+    middle_slice = slice(shape[1] // 2 - middle_plane_width, shape[1] // 2 + middle_plane_width)
+    interpolation_l[:, middle_slice] = 0
+    interpolation_r[:, middle_slice] = 0
+
+    return interpolation_n, interpolation_l, interpolation_r

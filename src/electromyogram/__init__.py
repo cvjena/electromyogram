@@ -1,4 +1,12 @@
-__all__ = ["interpolate", "plot_locations", "Kuramoto", "Fridlund", "colorize", "get_colormap"]
+__all__ = [
+    "interpolate",
+    "plot_locations",
+    "Kuramoto",
+    "Fridlund",
+    "colorize",
+    "get_colormap",
+    "mirrored_interpolate",
+]
 
 from electromyogram.plot import (
     Fridlund,
@@ -6,5 +14,6 @@ from electromyogram.plot import (
     colorize,
     get_colormap,
     interpolate,
+    mirrored_interpolate,
     plot_locations,
 )
