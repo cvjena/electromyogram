@@ -88,7 +88,7 @@ class Scheme(abc.ABC):
             else:
                 vals_right[emg_name] = emg_value
 
-        return vals_left, vals_right
+        return vals_right, vals_left
 
 
 class Kuramoto(Scheme):
@@ -202,7 +202,7 @@ def interpolate(
     vmin: float = 0.0,
     vmax: Optional[float] = None,
     mirror: bool = False,
-    middle_plane_width: int = 2,
+    mirror_plane_width: int = 2,
 ) -> Union[np.ndarray, tuple[np.ndarray, np.ndarray, np.ndarray]]:
     if not mirror:
         return __interpolate(scheme, emg_values, shape, vmin, vmax)
@@ -213,7 +213,7 @@ def interpolate(
     interpolation_r = __interpolate(scheme, emg_values_mirrored_r, shape, vmin, vmax)
 
     # draw a vertical line in the mirrored images to indicate the mirror plane
-    middle_slice = slice(shape[1] // 2 - middle_plane_width, shape[1] // 2 + middle_plane_width)
+    middle_slice = slice(shape[1] // 2 - mirror_plane_width, shape[1] // 2 + mirror_plane_width)
     interpolation_l[:, middle_slice] = 0
     interpolation_r[:, middle_slice] = 0
 

@@ -37,8 +37,10 @@ def visualize(
     blackandwhite: bool,
     use_global: bool,
     size: int,
+    mirror: bool,
+    mirror_plane_width: int,
 ):
-    plots = []
+    movements = []
     size = int(size)
 
     scale = size / 4096
@@ -65,20 +67,24 @@ def visualize(
             vmin = 0
             vmax = max(data[scheme_val].values())
 
-        intr = electromyogram.interpolate(scheme=scheme_sel, emg_values=data[scheme_val], shape=SIZE)
-        plot = electromyogram.colorize(intr, vmin=vmin, vmax=vmax, cmap=colormap)
+        intr = electromyogram.interpolate(scheme=scheme_sel, emg_values=data[scheme_val], shape=SIZE, mirror=mirror, mirror_plane_width=mirror_plane_width)
+        if mirror:
+            colorized = [electromyogram.colorize(i, vmin=vmin, vmax=vmax, cmap=colormap) for i in intr]
+        else:
+            colorized = [electromyogram.colorize(intr, vmin=vmin, vmax=vmax, cmap=colormap)]
 
         temp = cv2.resize(data["img"], SIZE)
         if blackandwhite:
             temp = cv2.cvtColor(temp, cv2.COLOR_BGR2GRAY)
             temp = cv2.cvtColor(temp, cv2.COLOR_GRAY2BGR)
 
-        warp_face = WARPER.apply(temp, img_data=plot, beta=beta)
-        warp_zero = WARPER.apply(np.zeros_like(temp), img_data=plot, beta=1.0)
-        plot = cv2.hconcat([temp, plot, warp_zero, warp_face])
-        plots.append(plot)
+        warp_face = WARPER.apply(temp, img_data=colorized[0], beta=beta)
+        warp_zero = WARPER.apply(np.zeros_like(temp), img_data=colorized[0], beta=1.0)
 
-    new_image = cv2.vconcat(plots)
+        plot = cv2.hconcat([temp, *colorized, warp_zero, warp_face])
+        movements.append(plot)
+
+    new_image = cv2.vconcat(movements)
 
     return gr.Image.update(value=new_image, label=f"Visualization {scheme}")
 
@@ -96,13 +102,21 @@ with gr.Blocks(css="footer {visibility: hidden}") as demo:
             blackandwhite = gr.Checkbox(False, label="Black and White")
             use_global = gr.Checkbox(False, label="Use Global")
             size = gr.Slider(minimum=128, maximum=2048, step=128, value=256, label="Size")
+
+            mirror = gr.Checkbox(False, label="Mirror")
+            mirror_plane_width = gr.Number(
+                2,
+                precision=0,
+                label="Mirror Plane Width",
+            )
+
             btn = gr.Button("Visualize", variant="primary")
 
         with gr.Column():
             gr.Markdown("## Visualization")
             vis_img = gr.Image(schaede_img["Neutral"]["img"], label="Visualization")
 
-    inp_params = [scheme, beta, colormap, blackandwhite, use_global, size]
+    inp_params = [scheme, beta, colormap, blackandwhite, use_global, size, mirror, mirror_plane_width]
     out_params = vis_img
 
     btn.click(visualize, inputs=inp_params, outputs=out_params)
