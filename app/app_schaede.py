@@ -10,24 +10,28 @@ from PIL import Image
 import electromyogram
 
 # load schaede_images
-test_values = json.load(open("data/fridlund.json"))
+vals_fridlund = json.load(open("data/fridlund.json"))
+vals_kuramoto = json.load(open("data/kuramoto.json"))
+
 schaede_img = {
     f.stem.split("_")[1]: {
         "img": np.array(Image.open(f)),
         "lms": np.load(f.with_suffix(".npy"))[:468],
-        "val": test_values.get(f.stem.split("_")[1].replace("-", " "), None),
+        "val_fridlund": vals_fridlund.get(f.stem.split("_")[1].replace("-", " "), None),
+        "val_kuramoto": vals_kuramoto.get(f.stem.split("_")[1].replace("-", " "), None),
     }
     for f in sorted(list(Path("schaede_images").glob("*.png")))
 }
 
 WARPER = face_projection.Warper()
-scheme = electromyogram.Fridlund()
+scheme_fri = electromyogram.Fridlund()
+scheme_kur = electromyogram.Kuramoto()
 
-# todo kuramoto
 # todo mirroring
 
 
 def visualize(
+    scheme: str,
     beta: float,
     colormap: str,
     blackandwhite: bool,
@@ -43,20 +47,25 @@ def visualize(
 
     vmin = np.inf
     vmax = -np.inf
+    scheme_sel = scheme_fri if scheme == "Fridlund" else scheme_kur
+    scheme_val = "val_fridlund" if scheme == "Fridlund" else "val_kuramoto"
+
     if use_global:
         for name, data in schaede_img.items():
-            if data["val"] is None:
+            if data[scheme_val] is None:
                 continue
             vmin = 0
-            vmax = max(vmax, max(data["val"].values()))
+            vmax = max(vmax, max(data[scheme_val].values()))
 
     for name, data in schaede_img.items():
-        if data["val"] is None:
+        if data[scheme_val] is None:
+            print("Skipping", name)
             continue
         if not use_global:
             vmin = 0
-            vmax = max(data["val"].values())
-        intr = electromyogram.interpolate(scheme=scheme, emg_values=data["val"], shape=SIZE)
+            vmax = max(data[scheme_val].values())
+
+        intr = electromyogram.interpolate(scheme=scheme_sel, emg_values=data[scheme_val], shape=SIZE)
         plot = electromyogram.colorize(intr, vmin=vmin, vmax=vmax, cmap=colormap)
 
         temp = cv2.resize(data["img"], SIZE)
@@ -81,6 +90,7 @@ with gr.Blocks(css="footer {visibility: hidden}") as demo:
         with gr.Column():
             gr.Markdown("## Visualization Settings")
 
+            scheme = gr.Dropdown(["Fridlund", "Kuramoto"], value="Kuramoto", label="Scheme")
             beta = gr.Slider(0.0, 0.999, 0.4, label="Beta")
             colormap = gr.Dropdown(["viridis", "plasma", "inferno", "magma", "jet", "bone", "parula"], value="parula", label="Colormap")
             blackandwhite = gr.Checkbox(False, label="Black and White")
@@ -92,7 +102,7 @@ with gr.Blocks(css="footer {visibility: hidden}") as demo:
             gr.Markdown("## Visualization")
             vis_img = gr.Image(schaede_img["Neutral"]["img"], label="Visualization")
 
-    inp_params = [beta, colormap, blackandwhite, use_global, size]
+    inp_params = [scheme, beta, colormap, blackandwhite, use_global, size]
     out_params = vis_img
 
     btn.click(visualize, inputs=inp_params, outputs=out_params)
