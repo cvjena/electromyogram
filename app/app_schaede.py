@@ -80,7 +80,7 @@ def visualize(
 
     new_image = cv2.vconcat(plots)
 
-    return gr.Image.update(value=new_image)
+    return gr.Image.update(value=new_image, label=f"Visualization {scheme}")
 
 
 with gr.Blocks(css="footer {visibility: hidden}") as demo:
