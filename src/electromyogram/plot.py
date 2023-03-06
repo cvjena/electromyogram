@@ -316,6 +316,7 @@ def colorize(
     cmap: Optional[Union[str, Type]] = "viridis",
     vmin: Optional[float] = None,
     vmax: Optional[float] = None,
+    white_background: bool = False,
 ) -> np.ndarray:
     """Colorize an electromyogram interpolation using a given colormap
 
@@ -357,5 +358,11 @@ def colorize(
 
     # scale the values to the range [0, 255]
     interpolation = (interpolation * 255).astype(np.uint8)
+    colored = apply_colormap(interpolation, get_colormap(cmap))
 
-    return apply_colormap(interpolation, get_colormap(cmap))
+    if white_background:
+        size = colored.shape[:2]
+        coords_scaled = ((np.array(consts.FACE_COORDS) / 4096) * size[0]).astype(np.int32)
+        mask = cv2.fillConvexPoly(np.zeros(size), cv2.convexHull(coords_scaled), 1)
+        colored = np.where(mask[..., None] == 0, np.full_like(colored, fill_value=[255, 255, 255]), colored)
+    return colored
