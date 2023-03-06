@@ -1,4 +1,4 @@
-__all__ = ["interpolate", "plot_locations", "Kuramoto", "Fridlund", "colorize", "get_colormap", "mirrored_interpolate"]
+__all__ = ["interpolate", "plot_locations", "Kuramoto", "Fridlund", "colorize", "get_colormap"]
 
 import abc
 import datetime
@@ -201,6 +201,31 @@ def interpolate(
     shape: tuple[int, int] = (512, 512),
     vmin: float = 0.0,
     vmax: Optional[float] = None,
+    mirror: bool = False,
+    middle_plane_width: int = 2,
+) -> Union[np.ndarray, tuple[np.ndarray, np.ndarray, np.ndarray]]:
+    if not mirror:
+        return __interpolate(scheme, emg_values, shape, vmin, vmax)
+
+    emg_values_mirrored_l, emg_values_mirrored_r = scheme.mirror(emg_values)
+    interpolation_n = __interpolate(scheme, emg_values, shape, vmin, vmax)
+    interpolation_l = __interpolate(scheme, emg_values_mirrored_l, shape, vmin, vmax)
+    interpolation_r = __interpolate(scheme, emg_values_mirrored_r, shape, vmin, vmax)
+
+    # draw a vertical line in the mirrored images to indicate the mirror plane
+    middle_slice = slice(shape[1] // 2 - middle_plane_width, shape[1] // 2 + middle_plane_width)
+    interpolation_l[:, middle_slice] = 0
+    interpolation_r[:, middle_slice] = 0
+
+    return interpolation_n, interpolation_l, interpolation_r
+
+
+def __interpolate(
+    scheme: Scheme,
+    emg_values: dict[str, float],
+    shape: tuple[int, int] = (512, 512),
+    vmin: float = 0.0,
+    vmax: Optional[float] = None,
 ) -> np.ndarray:
     """Interpolate the EMG values to a 2D canvas.
 
@@ -223,8 +248,6 @@ def interpolate(
         The maximum value of the EMG values. Defaults to None and will be set to the maximum value of the EMG values.
     """
 
-    # TODO add the mirror options as discussed in the last meeting, maybe should be a separate function
-    #      which calls this one with the prepared values!
     if not scheme.valid(emg_values):
         raise ValueError("Either missing or invalid EMG keys/values in dict")
 
@@ -336,25 +359,3 @@ def colorize(
     interpolation = (interpolation * 255).astype(np.uint8)
 
     return apply_colormap(interpolation, get_colormap(cmap))
-
-
-def mirrored_interpolate(
-    scheme: Scheme,
-    emg_values: dict[str, float],
-    shape: tuple[int, int] = (512, 512),
-    vmin: float = 0.0,
-    vmax: Optional[float] = None,
-    middle_plane_width: int = 2,
-) -> tuple[np.array, np.array, np.array]:
-    emg_values_mirrored_l, emg_values_mirrored_r = scheme.mirror(emg_values)
-
-    interpolation_n = interpolate(scheme, emg_values, shape, vmin, vmax)
-    interpolation_l = interpolate(scheme, emg_values_mirrored_l, shape, vmin, vmax)
-    interpolation_r = interpolate(scheme, emg_values_mirrored_r, shape, vmin, vmax)
-
-    # draw a vertical line in the mirrored images to indicate the mirror plane
-    middle_slice = slice(shape[1] // 2 - middle_plane_width, shape[1] // 2 + middle_plane_width)
-    interpolation_l[:, middle_slice] = 0
-    interpolation_r[:, middle_slice] = 0
-
-    return interpolation_n, interpolation_l, interpolation_r

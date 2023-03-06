@@ -5,7 +5,6 @@ __all__ = [
     "Fridlund",
     "colorize",
     "get_colormap",
-    "mirrored_interpolate",
 ]
 
 from electromyogram.plot import (
@@ -14,6 +13,5 @@ from electromyogram.plot import (
     colorize,
     get_colormap,
     interpolate,
-    mirrored_interpolate,
     plot_locations,
 )
