@@ -34,6 +34,7 @@ def visualize(
     scheme: str,
     beta: float,
     colormap: str,
+    white_background: bool,
     blackandwhite: bool,
     use_global: bool,
     size: int,
@@ -69,9 +70,9 @@ def visualize(
 
         intr = electromyogram.interpolate(scheme=scheme_sel, emg_values=data[scheme_val], shape=SIZE, mirror=mirror, mirror_plane_width=mirror_plane_width)
         if mirror:
-            colorized = [electromyogram.colorize(i, vmin=vmin, vmax=vmax, cmap=colormap) for i in intr]
+            colorized = [electromyogram.colorize(i, vmin=vmin, vmax=vmax, cmap=colormap, white_background=white_background) for i in intr]
         else:
-            colorized = [electromyogram.colorize(intr, vmin=vmin, vmax=vmax, cmap=colormap)]
+            colorized = [electromyogram.colorize(intr, vmin=vmin, vmax=vmax, cmap=colormap, white_background=white_background)]
 
         temp = cv2.resize(data["img"], SIZE)
         if blackandwhite:
@@ -99,6 +100,7 @@ with gr.Blocks(css="footer {visibility: hidden}") as demo:
             scheme = gr.Dropdown(["Fridlund", "Kuramoto"], value="Kuramoto", label="Scheme")
             beta = gr.Slider(0.0, 0.999, 0.4, label="Beta")
             colormap = gr.Dropdown(["viridis", "plasma", "inferno", "magma", "jet", "bone", "parula"], value="parula", label="Colormap")
+            white_background = gr.Checkbox(False, label="White Background")
             blackandwhite = gr.Checkbox(False, label="Black and White")
             use_global = gr.Checkbox(False, label="Use Global")
             size = gr.Slider(minimum=128, maximum=2048, step=128, value=256, label="Size")
@@ -116,7 +118,7 @@ with gr.Blocks(css="footer {visibility: hidden}") as demo:
             gr.Markdown("## Visualization")
             vis_img = gr.Image(schaede_img["Neutral"]["img"], label="Visualization")
 
-    inp_params = [scheme, beta, colormap, blackandwhite, use_global, size, mirror, mirror_plane_width]
+    inp_params = [scheme, beta, colormap, white_background, blackandwhite, use_global, size, mirror, mirror_plane_width]
     out_params = vis_img
 
     btn.click(visualize, inputs=inp_params, outputs=out_params)
