@@ -56,8 +56,52 @@ class Scheme(abc.ABC):
     def load_locs(self) -> None:
         pass
 
+    def mirror(self, emg_values: dict[str, float]) -> tuple[dict[str, float], dict[str, float]]:
+        """Mirror the EMG values.
+
+        This function mirrors the EMG values.
+        It creates two new dicts, one for the left side and one for the right side of the face.
+        The dict for left then contains the EMG values for the left side of the face.
+        The dict for right then contains the EMG values for the right side of the face.
+        """
+        assert self.pairs_L is not None, "Pair values have to be implemented by the sub classes."
+        assert self.pairs_R is not None, "Pair values have to be implemented by the sub classes."
+        assert len(self.pairs_L) == len(self.pairs_R)
+
+        vals_left = {}
+        # mirror the values, i.e. swap the left and right values
+        for movement, emg_dict in emg_values.items():
+            temp = {}
+            for emg_name, emg_value in emg_dict.items():
+                if emg_name in self.pairs_R:
+                    name_left = self.pairs_L[self.pairs_R.index(emg_name)]
+                    left_val = emg_dict[name_left]
+                    temp[emg_name] = left_val
+                else:
+                    temp[emg_name] = emg_value
+            vals_left[movement] = temp
+
+        vals_right = {}
+        # mirror the values, i.e. swap the left and right values
+        for movement, emg_dict in emg_values.items():
+            temp = {}
+            for emg_name, emg_value in emg_dict.items():
+                if emg_name in self.pairs_L:
+                    name_right = self.pairs_R[self.pairs_L.index(emg_name)]
+                    right_val = emg_dict[name_right]
+                    temp[emg_name] = right_val
+                else:
+                    temp[emg_name] = emg_value
+            vals_right[movement] = temp
+
+        return vals_left, vals_right
+
 
 class Kuramoto(Scheme):
+    # given as (L, R)
+    pairs_L = ["E1", "E3", "E5", "E7", "E9", "E13", "E15", "E17"]
+    pairs_R = ["E2", "E4", "E6", "E8", "E10", "E14", "E16", "E18"]
+
     def save_locs(self) -> None:
         p = pathlib.Path(__file__).parent / "locations_kuramoto.json"
         p.write_text(json.dumps(self.locations, indent=4))
@@ -72,6 +116,9 @@ class Kuramoto(Scheme):
 
 
 class Fridlund(Scheme):
+    pairs_L = ["Dao li", "OrbOr li", "Ment li", "Mass li", "Zyg li", "Llsup li", "OrbOc li", "lat Front li", "med Front li", "Corr li", "Deprsup li"]
+    pairs_R = ["Dao re", "OrbOr re", "Ment re", "Mass re", "Zyg re", "Llsup re", "OrbOc re", "lat Front re", "med Front re", "Corr re", "Deprsup re"]
+
     def save_locs(self) -> None:
         p = pathlib.Path(__file__).parent / "locations_fridlund.json"
         p.write_text(json.dumps(self.locations, indent=4))
@@ -295,3 +342,9 @@ def colorize(
     interpolation = (interpolation * 255).astype(np.uint8)
 
     return apply_colormap(interpolation, get_colormap(cmap))
+
+
+def mirrored(
+    scheme: Scheme, emg_values: dict[str, float], shape: tuple[int, int] = (512, 512), vmin: float = 0.0, vmax: Optional[float] = None
+) -> tuple[np.array, np.array, np.array]:
+    pass
