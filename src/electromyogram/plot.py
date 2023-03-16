@@ -93,8 +93,8 @@ class Scheme(abc.ABC):
 
 class Kuramoto(Scheme):
     # given as (L, R)
-    pairs_L = ["E1", "E3", "E5", "E7", "E9", "E13", "E15", "E17"]
-    pairs_R = ["E2", "E4", "E6", "E8", "E10", "E14", "E16", "E18"]
+    pairs_R = ["E1", "E3", "E5", "E7", "E9", "E13", "E15", "E17"]
+    pairs_L = ["E2", "E4", "E6", "E8", "E10", "E14", "E16", "E18"]
 
     def save_locs(self) -> None:
         p = pathlib.Path(__file__).parent / "locations_kuramoto.json"
