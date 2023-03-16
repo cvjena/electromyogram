@@ -208,6 +208,10 @@ def interpolate(
         return __interpolate(scheme, emg_values, shape, vmin, vmax)
 
     emg_values_mirrored_l, emg_values_mirrored_r = scheme.mirror(emg_values)
+
+    if vmax is None:
+        vmax = max(emg_values.values())
+
     interpolation_n = __interpolate(scheme, emg_values, shape, vmin, vmax)
     interpolation_l = __interpolate(scheme, emg_values_mirrored_l, shape, vmin, vmax)
     interpolation_r = __interpolate(scheme, emg_values_mirrored_r, shape, vmin, vmax)
@@ -261,18 +265,19 @@ def __interpolate(
 
     vmin = vmin or v.min()
     vmax = vmax or v.max()
+    lmax = v.max()
 
     # prepare the data for RBF interpolation
     p = xy.reshape(-1, 2)
     v = v.reshape(-1, 1)
     x_grid = np.mgrid[-100 : 100 : canvas.shape[0] * 1j, -100 : 100 : canvas.shape[1] * 1j].reshape(2, -1).T
-    Z = interp.RBFInterpolator(p, v, kernel="thin_plate_spline", smoothing=0.1)(x_grid)
+    Z = interp.RBFInterpolator(p, v, kernel="thin_plate_spline", smoothing=0.0)(x_grid)
     # reshape the data to the correct shape, and transpose it such it is rotated 90 degrees counter-clockwise
     Z = np.rot90(Z.reshape(canvas.shape[0], canvas.shape[1]))
     # all values smaller than 0 are set to 0
     Z[Z < vmin] = vmin
     Z = (Z - vmin) / (Z.max() - vmin)  # normalize the values to the range [0, 1]
-    return Z * vmax
+    return Z * lmax
 
 
 def get_colormap(
