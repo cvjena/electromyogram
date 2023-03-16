@@ -110,8 +110,8 @@ class Kuramoto(Scheme):
 
 
 class Fridlund(Scheme):
-    pairs_L = ["Dao li", "OrbOr li", "Ment li", "Mass li", "Zyg li", "Llsup li", "OrbOc li", "lat Front li", "med Front li", "Corr li", "Deprsup li"]
-    pairs_R = ["Dao re", "OrbOr re", "Ment re", "Mass re", "Zyg re", "Llsup re", "OrbOc re", "lat Front re", "med Front re", "Corr re", "Deprsup re"]
+    pairs_L = ["DAO li", "OrbOr li", "Ment li", "Mass li", "Zyg li", "Llsup li", "OrbOc li", "lat Front li", "med Front li", "Corr li", "Deprsup li"]
+    pairs_R = ["DAO re", "OrbOr re", "Ment re", "Mass re", "Zyg re", "Llsup re", "OrbOc re", "lat Front re", "med Front re", "Corr re", "Deprsup re"]
 
     def save_locs(self) -> None:
         p = pathlib.Path(__file__).parent / "locations_fridlund.json"
