@@ -147,6 +147,10 @@ def plot_locations(
     scheme: Scheme,
     shape: tuple[int, int] = (512, 512),
     draw_outer_hull: bool = True,
+    canvas_: Optional[np.ndarray] = None,
+    fontScale: float = 2,
+    thickness: int = 2,
+    radius: int = 50,
 ) -> np.ndarray:
     """Plot the locations of the EMG values on a 2D canvas.
 
@@ -161,23 +165,38 @@ def plot_locations(
         The shape of the canvas, by default (512, 512)
     draw_outer_hull : bool, optional
         Whether to draw the outer hull of the face, by default True
+    canvas : Optional[np.ndarray], optional
+        The canvas to draw on, by default None
 
     Returns
     -------
     np.ndarray
         The canvas with the plotted EMG values.
     """
-    canvas = np.zeros((*shape, 3), dtype=np.uint8)
+    if canvas_ is None:
+        canvas = np.zeros((*shape, 3), dtype=np.uint8)
+    else:
+        canvas = canvas_.copy()
+
+    # assert dim == 3
+    assert canvas.ndim == 3
+
+    if canvas.shape[:2] != shape:
+        canvas = cv2.resize(canvas, shape, interpolation=cv2.INTER_AREA)
 
     scale_factor = shape[0] / DEFAULT_SIZE_PX
 
     fontFace = cv2.FONT_HERSHEY_SIMPLEX
-    fontScale = 2 * scale_factor
-    thickness = int(8 * scale_factor)
-    radius = int(50 * scale_factor)
+    fontScale = fontScale * scale_factor
+    thickness = int(thickness * scale_factor)
+    radius = int(radius * scale_factor)
 
-    def _draw(img: np.ndarray, text: str, x: int, y: int, color: tuple = (0, 0, 255)):
-        cv2.circle(img, (x, y), radius, color, -1)
+    def _draw(img: np.ndarray, text: str, x: int, y: int, color: tuple = (0, 0, 255), outer: bool = False):
+        if not outer:
+            cv2.circle(img, (x, y), radius, color, -1)
+        else:
+            cv2.ellipse(img, (x, y), (radius // 2, radius), 0, 0, 360, color, -1)
+
         text_size, _ = cv2.getTextSize(text, fontFace, fontScale, thickness)
         text_x = x - text_size[0] // 2
         text_y = y + text_size[1] // 2
@@ -190,7 +209,7 @@ def plot_locations(
     if draw_outer_hull:
         for name, loc in scheme.outer_dict.items():
             x, y = rel_to_abs(loc[0], loc[1], canvas.shape)
-            _draw(canvas, name, x, y, color=(0, 255, 0))
+            _draw(canvas, name, x, y, color=(0, 255, 0), outer=True)
 
     return canvas
 
