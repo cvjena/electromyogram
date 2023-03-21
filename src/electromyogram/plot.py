@@ -151,6 +151,7 @@ def plot_locations(
     fontScale: float = 2,
     thickness: int = 2,
     radius: int = 50,
+    fontColor: tuple[int, int, int] = (255, 255, 255),
 ) -> np.ndarray:
     """Plot the locations of the EMG values on a 2D canvas.
 
@@ -195,20 +196,51 @@ def plot_locations(
         if not outer:
             cv2.circle(img, (x, y), radius, color, -1)
         else:
-            cv2.ellipse(img, (x, y), (radius // 2, radius), 0, 0, 360, color, -1)
+            cv2.ellipse(img, (x, y), (radius * 3 // 4, radius), 0, 0, 360, color, -1)
 
         text_size, _ = cv2.getTextSize(text, fontFace, fontScale, thickness)
         text_x = x - text_size[0] // 2
         text_y = y + text_size[1] // 2
-        cv2.putText(img, text, (text_x, text_y), fontFace, fontScale, (255, 255, 255), thickness)
+
+        cv2.putText(img, text, (text_x, text_y), fontFace, fontScale, fontColor, thickness)
+
+    emg_names = {
+        "Corr li": "F6",
+        "Corr re": "F5",
+        "DAO li": "F14",
+        "DAO re": "F13",
+        "Deprsup li": "F8",
+        "Deprsup re": "F7",
+        "lat Front li": "F4",
+        "lat Front re": "F3",
+        "Llsup li": "F10",
+        "Llsup re": "F9",
+        "Mass li": "F22",
+        "Mass re": "F21",
+        "med Front li": "F2",
+        "med Front re": "F1",
+        "Ment li": "F16",
+        "Ment re": "F15",
+        "OrbOc li": "F18",
+        "OrbOc re": "F17",
+        "OrbOr li": "F12",
+        "OrbOr re": "F11",
+        "Zyg li": "F20",
+        "Zyg re": "F19",
+    }
 
     for emg_name, emg_loc in scheme.locations.items():
         x, y = rel_to_abs(emg_loc[0], emg_loc[1], canvas.shape)
-        _draw(canvas, emg_name, x, y)
+        name = emg_names.get(emg_name, emg_name)
+        if name.startswith("E"):
+            name = name.replace("E", "K")
+
+        _draw(canvas, name, x, y)
 
     if draw_outer_hull:
         for name, loc in scheme.outer_dict.items():
             x, y = rel_to_abs(loc[0], loc[1], canvas.shape)
+            name = name.replace("O", "")
             _draw(canvas, name, x, y, color=(0, 255, 0), outer=True)
 
     return canvas
