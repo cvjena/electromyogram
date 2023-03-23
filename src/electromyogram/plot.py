@@ -327,7 +327,12 @@ def __interpolate(
     Z = np.rot90(Z.reshape(canvas.shape[0], canvas.shape[1]))
     # all values smaller than 0 are set to 0
     Z[Z < vmin] = vmin
-    Z = (Z - vmin) / (Z.max() - vmin)  # normalize the values to the range [0, 1]
+
+    # check if Z.max - vmin is really close 0, if so, set Z to 0
+    if np.isclose(Z.max() - vmin, 0):
+        Z = np.zeros_like(Z)
+    else:
+        Z = (Z - vmin) / (Z.max() - vmin)  # normalize the values to the range [0, 1]
     return Z * lmax
 
 
@@ -410,7 +415,10 @@ def colorize(
         raise ValueError("electromyogram values are outside of the range [vmin, vmax]")
 
     # normalize the values between vmin and vmax
-    interpolation = (interpolation - vmin) / (vmax - vmin)
+    if np.isclose(vmax - vmin, 0):
+        interpolation = np.zeros_like(interpolation)
+    else:
+        interpolation = (interpolation - vmin) / (vmax - vmin)
 
     # scale the values to the range [0, 255]
     interpolation = (interpolation * 255).astype(np.uint8)
