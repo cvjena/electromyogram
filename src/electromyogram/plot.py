@@ -1,4 +1,4 @@
-__all__ = ["interpolate", "plot_locations", "Kuramoto", "Fridlund", "colorize", "get_colormap"]
+__all__ = ["interpolate", "plot_locations", "Kuramoto", "Fridlund", "colorize", "get_colormap", "annotate_locations"]
 
 import abc
 import datetime
@@ -8,6 +8,7 @@ from typing import Optional, Type, Union
 
 import cv2
 import numpy as np
+from matplotlib import pyplot as plt
 from scipy import interpolate as interp
 
 from . import consts
@@ -143,9 +144,72 @@ def abs_to_rel(abs_x: int, abs_y: int, size: tuple[int, int]) -> tuple[float, fl
     return rel_x, rel_y
 
 
+def annotate_locations(
+    ax: plt.Axes,
+    scheme: Scheme,
+    dims: tuple[int, int] = (512, 512),
+    fontsize: int = 8,
+    marker_size: int = 3,
+    marker_color: str = "black",
+    draw_outer_hull: bool = False,
+    text_offset: tuple[int, int] = (0, 10),
+):
+    emg_names = {
+        "Corr li": "F6",
+        "Corr re": "F5",
+        "DAO li": "F14",
+        "DAO re": "F13",
+        "Deprsup li": "F8",
+        "Deprsup re": "F7",
+        "lat Front li": "F4",
+        "lat Front re": "F3",
+        "Llsup li": "F10",
+        "Llsup re": "F9",
+        "Mass li": "F22",
+        "Mass re": "F21",
+        "med Front li": "F2",
+        "med Front re": "F1",
+        "Ment li": "F16",
+        "Ment re": "F15",
+        "OrbOc li": "F18",
+        "OrbOc re": "F17",
+        "OrbOr li": "F12",
+        "OrbOr re": "F11",
+        "Zyg li": "F20",
+        "Zyg re": "F19",
+    }
+
+    for emg_name, emg_loc in scheme.locations.items():
+        x, y = rel_to_abs(emg_loc[0], emg_loc[1], size=dims)
+        name = emg_names.get(emg_name, emg_name)
+        if name.startswith("E"):
+            name = name.replace("E", "K")
+
+        ax.plot(x, y, marker=".", color=marker_color, markersize=marker_size)
+
+        text = ax.annotate(
+            name,
+            (x - text_offset[0], y - text_offset[1]),
+            xycoords="data",
+            va="bottom",
+            ha="center",
+            color="black",
+            fontsize=fontsize,
+        )
+        # text.set_path_effects([
+        #     path_effects.Stroke(linewidth=0.5, foreground='black'),
+        #     path_effects.Normal()
+        # ])
+
+    if draw_outer_hull:
+        for name, loc in scheme.outer_dict.items():
+            x, y = rel_to_abs(loc[0], loc[1], size=dims)
+            ax.plot(x, y, marker="D", color="green", markersize=marker_size // 2)
+
+
 def plot_locations(
     scheme: Scheme,
-    shape: tuple[int, int] = (512, 512),
+    shape: tuple[int, int] = (2048, 2048),
     draw_outer_hull: bool = True,
     canvas_: Optional[np.ndarray] = None,
     fontScale: float = 2,
@@ -230,18 +294,21 @@ def plot_locations(
     }
 
     for emg_name, emg_loc in scheme.locations.items():
-        x, y = rel_to_abs(emg_loc[0], emg_loc[1], canvas.shape)
         name = emg_names.get(emg_name, emg_name)
         if name.startswith("E"):
             name = name.replace("E", "K")
 
-        _draw(canvas, name, x, y)
+        x, y = rel_to_abs(emg_loc[0], emg_loc[1], size=shape)
 
-    if draw_outer_hull:
-        for name, loc in scheme.outer_dict.items():
-            x, y = rel_to_abs(loc[0], loc[1], canvas.shape)
-            name = name.replace("O", "")
-            _draw(canvas, name, x, y, color=(0, 255, 0), outer=True)
+        canvas = cv2.circle(canvas, (x, y), 18, (0, 0, 0), -1)
+        canvas = cv2.circle(canvas, (x, y), 15, (255, 105, 180), -1)
+
+        text_size = cv2.getTextSize(name, cv2.FONT_HERSHEY_COMPLEX, 2, 5)[0]
+        x -= text_size[0] // 2
+        y += int(text_size[1] * 1.5)
+
+        canvas = cv2.putText(canvas, name, (x, y), cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 0, 0), 8, cv2.LINE_AA)
+        canvas = cv2.putText(canvas, name, (x, y), cv2.FONT_HERSHEY_SIMPLEX, 2, (255, 255, 255), 6, cv2.LINE_AA)
 
     return canvas
 
