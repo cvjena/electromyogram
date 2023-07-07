@@ -104,36 +104,8 @@ def plot_locations(
 
         cv2.putText(img, text, (text_x, text_y), fontFace, fontScale, fontColor, thickness)
 
-    emg_names = {
-        "Corr li": "F6",
-        "Corr re": "F5",
-        "DAO li": "F14",
-        "DAO re": "F13",
-        "Deprsup li": "F8",
-        "Deprsup re": "F7",
-        "lat Front li": "F4",
-        "lat Front re": "F3",
-        "Llsup li": "F10",
-        "Llsup re": "F9",
-        "Mass li": "F22",
-        "Mass re": "F21",
-        "med Front li": "F2",
-        "med Front re": "F1",
-        "Ment li": "F16",
-        "Ment re": "F15",
-        "OrbOc li": "F18",
-        "OrbOc re": "F17",
-        "OrbOr li": "F12",
-        "OrbOr re": "F11",
-        "Zyg li": "F20",
-        "Zyg re": "F19",
-    }
-
     for emg_name, emg_loc in scheme.locations.items():
-        name = emg_names.get(emg_name, emg_name)
-        if name.startswith("E"):
-            name = name.replace("E", "K")
-
+        name = scheme.shortcuts.get(emg_name, emg_name)
         x, y = rel_to_abs(emg_loc[0], emg_loc[1], size=shape)
 
         canvas = cv2.circle(canvas, (x, y), 18, (0, 0, 0), -1)
