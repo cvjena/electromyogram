@@ -1,6 +1,6 @@
 # electromyogram
 
-This is a small python package to create a Electromyogram (EMG) plots for facial muscles.
+This is a small python package to create a Electromyogram (EMG) Intensity plots for facial muscles with facial structure.
 The current focus is on the solely facial muscles but it could be extended to other muscles, but this is not planned yet.
 
 We currently support the two following schematics for acquiring the EMG data:
