@@ -7,9 +7,8 @@ import numpy as np
 from matplotlib import pyplot as plt
 from scipy import interpolate as interp
 
-from electromyogram import Scheme
-
-from .schemes import DEFAULT_SIZE_PX
+from . import consts
+from .schemes import DEFAULT_SIZE_PX, Scheme
 from .utils import rel_to_abs
 
 def annotate_locations(
