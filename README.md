@@ -1,51 +1,42 @@
 # electromyogram
 
-This is a small python package to create a Electromyogram (EMG) Intensity plots for facial muscles with facial structure.
-The current focus is on the solely facial muscles but it could be extended to other muscles, but this is not planned yet.
+<!-- Create a teaser plot figure here -->
 
-We currently support the two following schematics for acquiring the EMG data:
+This Python package provides a convenient way to create an Electromyogram (EMG) Intensity plot specifically designed for facial muscles with facial structure. With this tool, you can visualize and analyze the intensity of EMG data collected from various facial muscles.
 
-- Fridlund and Cappacio () []
-- Kuramoto et al. () []
+## Why use EMG Intensity Plot?
+
+- **Easy to use**: The package provides a straightforward interface, making it accessible for users of all levels of expertise.
+- **Visualize muscle activity**: The EMG Intensity plot allows you to visualize the intensity of muscle activity over the face, providing insights into patterns and variations.
+- **Specifically designed for facial muscles**: The tool focuses on facial muscles, enabling you to study and understand muscle activity in the face, which can be particularly useful in fields like facial expression analysis, neuroscience, and rehabilitation.
+- **Potential for extension**: While the current focus is on facial muscles, this tool could potentially be extended to analyze other muscle groups as well in the future.
+- **Beyond muscles**: The tool can also be used to plot other facial information, such as oxygen saturation, but this is not planned yet.
 
 ## Installation
 
-Currently the package is not available on PyPI.
-Thus, you have to install it from the source code.
-If you want to use the package in a virtual environment, you have to activate it first.
-Clone this repository and install it with pip:
+The package is availabe on [PyPI](https://pypi.org/project/electromyogram/) and can be installed with `pip`:
+  
+```bash
+pip install electromyogram
+```
+
+If you want to install it locally to add changes please close the repository and install it with `pip` in development mode.
+We assume you already created a virtual environment and activated it :)
 
 ```bash
 git clone <link to this repository>
 cd electromyogram
-pip install .
-```
-
-It is then available in your python environment, and you can import it with:
-
-```python
-import electromyogram
+pip install -e .
 ```
 
 ## Usage
 
-We predefined the two schematics (Fridlund and Cappacio and Kuramoto et al.) on a 2D canvas.
-This canvas is based on the canonical face model used by Google in several of their projects (dominantly in *mediapipe*).
-All EMG sensor coordinates are given relatively to this canvas thus arbitrary canvas scaling is possible.
-We default to a canvas size of 4096x4096 pixels.
+This tool is intended to simplify the creation of only the spatial intensity map for surface EMG data.
+All the required preprocessing of the data is not part of this package and is likely project-specific.
+We assume that the data is given in a dictionary (or pandas table) and the keys are the sensor locations.
 
-The current process for electromyogram visualization is based on a 2 step method.
-First, we create the interpolation of the given EMG values on a 2D canvas for the chosen schematic.
-Second, we allow the application of different color maps to the interpolation to create the final plot.
-
-### Example 1: Fridlund and Cappacio
-
-Our first example is based on the Fridlund and Cappacio schematic.
-We assume that the data is given in a dictionary and the keys are the sensor locations.
-Note: We only support a subset of the sensors in the Fridlund and Cappacio schematic. (TODO add list of supported sensors)
-
-The following locations are expected and then interpolated:
-![Locations ](files/locations_fridlund.png)
+Then, the correct physical interpolation between the sensors is done and the result is a 2D array of the interpolated values on the canonical face model.
+You can then apply different color maps to the interpolation to create the final plot.
 
 ```python
 import electromyogram as emg
@@ -53,37 +44,44 @@ import electromyogram as emg
 # we assume that the data is given in a dictionary and the keys are the sensor locations
 data_values = dict(...)
 
+scheme = emg.Fridlund()  # or emg.Kuramoto()
 # create the interpolation
-interpo = emg.interpolate(emg.Fridlund, data_values)
-myogram = emg.colorize(interpo, cmap='viridis')
+powermap = emg.interpolate(scheme, data_values, shape=(1024, 1024))
+powermap = emg.colorize(powermap, cmap='viridis')
 ```
 
-### Example 2: Kuramoto et al.
-Our second example is based on the Kuramoto et al. schematic.
-We assume that the data is given in a dictionary and the keys are the sensor locations.
-Note: We only support a subset of the sensors in the Kuramoto et al. schematic. (TODO add list of supported sensors)
+For the colorization the users can use any color map from [matplotlib](https://matplotlib.org/stable/tutorials/colors/colormaps.html) or [pallettable](https://jiffyclub.github.io/palettable/) (e.g. `pallettable.scientific.sequential.Imola20`)
+![Colors](files/colorization.jpg)
 
-The following locations are expected and then interpolated:
-![Locations ](files/locations_kuramoto.png)
+## Surface EMG Schematics
 
-```python
-import electromyogram as emg
+We currently support the two following schematics for acquiring the EMG data.
 
-# we assume that the data is given in a dictionary and the keys are the sensor locations
-data_values = dict(...)
-# create the interpolation
-interpo = emg.interpolate(emg.Kuramoto, data_values)
-myogram = emg.colorize(interpo, cmap='viridis')
-```
+| [Fridlund and Cappacio, 1986](https://pubmed.ncbi.nlm.nih.gov/3809364/) | [Kuramoto et al., 2019](https://onlinelibrary.wiley.com/doi/10.1002/npr2.12059) |
+|---|---|
+| ![Locations ](files/locations_fridlund.jpg)  |  ![Locations ](files/locations_kuramoto.jpg) |
+
+If you want to define your own scheme, just create a new class that inherits from `emg.Schematic` and implement the `get_sensor_locations` function.
+Then use it in the `interpolate` function and you are good to go.
 
 ## Todos
 
 - [ ] Handle if not all values are given for a schematic better
 - [ ] Add result images
+- [ ] Add function to draw triangulation onto the 2D canvas
+- [ ] Add function to draw sensor locations onto the 2D canvas
+- [ ] Add option to remove the area outside the canonical face model 
+- [ ] Make a nicer interface for the channel names
+- [ ] Add function to create the according colorbar for matplotlib in the correct size
+
 ## License
 
+MIT License
 
-## References
+## Citation
 
+If you use our work please cite us:
 
-## Acknowledgements
+```bibtex
+under publication, please wait a bit :)
+```
