@@ -10,7 +10,7 @@ This Python package provides a convenient way to create an Electromyogram (EMG) 
 - **Visualize muscle activity**: The EMG Intensity plot allows you to visualize the intensity of muscle activity over the face, providing insights into patterns and variations.
 - **Specifically designed for facial muscles**: The tool focuses on facial muscles, enabling you to study and understand muscle activity in the face, which can be particularly useful in fields like facial expression analysis, neuroscience, and rehabilitation.
 - **Potential for extension**: While the current focus is on facial muscles, this tool could potentially be extended to analyze other muscle groups as well in the future.
-- **Beyond muscles**: The tool can also be used to plot other facial information, such as oxygen saturation, but this is not planned yet.
+- **Beyond muscles**: The tool can also be used to plot other facial information, such as oxygen saturation, but this is not officially supported yet.
 
 ## Installation
 
