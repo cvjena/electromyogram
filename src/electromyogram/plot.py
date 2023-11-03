@@ -1,8 +1,12 @@
-__all__ = ["interpolate", "plot_locations", "colorize", "get_colormap", "annotate_locations"]
+__all__ = ["interpolate", "plot_locations", "colorize", "get_colormap", "annotate_locations", "postprocess"]
 
+
+from dataclasses import dataclass
 from typing import Optional, Type, Union
+from pathlib import Path
 
 import cv2
+import h5py
 import numpy as np
 from matplotlib import pyplot as plt
 from scipy import interpolate as interp
@@ -10,6 +14,24 @@ from scipy import interpolate as interp
 from . import consts
 from .schemes import DEFAULT_SIZE_PX, Scheme
 from .utils import rel_to_abs
+
+@dataclass
+class FaceModel:
+    points: np.ndarray
+    triangles: np.ndarray
+    facets: np.ndarray
+    masking: np.ndarray
+
+face_model_data = h5py.File(Path(__file__).parent / "face_model.h5", "r")
+
+face_model = FaceModel(
+    points=np.array(face_model_data["points"]),
+    triangles=np.array(face_model_data["triangles"]),
+    facets=np.array(face_model_data["facets"]),
+    masking=np.array(face_model_data["masking_canonical"]),
+)
+
+face_model_data.close()
 
 def annotate_locations(
     ax: plt.Axes,
@@ -177,8 +199,7 @@ def __interpolate(
         The maximum value of the EMG values. Defaults to None and will be set to the maximum value of the EMG values.
     """
 
-    if not scheme.valid(emg_values):
-        raise ValueError("Either missing or invalid EMG keys/values in dict")
+    scheme.valid(emg_values) # this raises a ValueError if the values are not valid
 
     canvas = np.zeros(shape, dtype=np.float32)
     keys_sorted_semg = sorted(scheme.locations.keys())
@@ -297,10 +318,26 @@ def colorize(
     # scale the values to the range [0, 255]
     interpolation = (interpolation * 255).astype(np.uint8)
     colored = apply_colormap(interpolation, get_colormap(cmap))
-
-    # if white_background:
-    #     size = colored.shape[:2]
-    #     coords_scaled = ((np.array(consts.FACE_COORDS) / 4096) * size[0]).astype(np.int32)
-    #     mask = cv2.fillConvexPoly(np.zeros(size), cv2.convexHull(coords_scaled), 1)
-    #     colored = np.where(mask[..., None] == 0, np.full_like(colored, fill_value=[255, 255, 255]), colored)
     return colored
+
+def postprocess(
+    powermap: np.ndarray,
+    remove_outer: bool = True,
+    draw_triangle: bool = True,
+    triangles_alpha: float = 0.2,
+) -> np.ndarray:
+    # scale the points to the current shape
+    points = (face_model.points * powermap.shape[0]).astype(np.int32)
+    
+    if draw_triangle:
+        color = 255 if powermap.ndim != 3 else (255, 255, 255)
+        lines = np.zeros_like(powermap)
+        lines = cv2.polylines(lines, [points[tri] for tri in face_model.triangles], True, color, thickness=1)
+        powermap = cv2.addWeighted(powermap, 1-triangles_alpha, lines, triangles_alpha, 0)
+    
+    if remove_outer:
+        hull = cv2.convexHull(points, returnPoints=True)
+        mask = cv2.drawContours(np.zeros(powermap.shape[:2]), [hull], 0, 1, -1)
+        powermap[mask == 0] = 255 if powermap.ndim != 3 else [255, 255, 255]
+        
+    return powermap

@@ -42,12 +42,10 @@ class Scheme(abc.ABC):
         temp_locations = self.locations.copy()
         for emg_name, emg_value in emg_values.items():
             if emg_name not in temp_locations:
-                return False
+                raise ValueError(f"EMG name {emg_name} not in locations.")
             if not self._check_value(emg_value):
-                return False
+                raise ValueError(f"EMG value {emg_value} for {emg_name} is not valid.")
             del temp_locations[emg_name]
-        return True
-
     def _check_value(self, emg_value: float) -> bool:
         return emg_value >= 0
 
