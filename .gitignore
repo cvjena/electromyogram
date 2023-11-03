@@ -54,7 +54,6 @@ MANIFEST
 
 #jupyter
 .ipynb_checkpoints
-*.ipynb
 
 # app/data
 temp_results

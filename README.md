@@ -1,12 +1,12 @@
 # electromyogram
 
-<!-- Create a teaser plot figure here -->
+![Teaser](files/teaser.jpg)
 
 This Python package provides a convenient way to create an Electromyogram (EMG) Intensity plot specifically designed for facial muscles with facial structure. With this tool, you can visualize and analyze the intensity of EMG data collected from various facial muscles.
 
-A small demo is hosted [here](www.semg.inf-cv.uni-jena.de), together with the tool [face-projection](https://github.com/cvjena/face-projection) for a projection onto the face.
+A small demo is hosted [here](https://semg.inf-cv.uni-jena.de/), together with the tool [face-projection](https://github.com/cvjena/face-projection) for a projection onto the face.
 
-## Why use EMG Intensity Plot?
+## Why use sEMG Intensity Plot?
 
 - **Easy to use**: The package provides a straightforward interface, making it accessible for users of all levels of expertise.
 - **Visualize muscle activity**: The EMG Intensity plot allows you to visualize the intensity of muscle activity over the face, providing insights into patterns and variations.
@@ -39,6 +39,8 @@ We assume that the data is given in a dictionary (or pandas table) and the keys 
 
 Then, the correct physical interpolation between the sensors is done, and the result is a 2D array of the interpolated values on the canonical face model.
 You can then apply different color maps to the interpolation to create the final plot.
+Detailed examples with test data can be found in `examples/`.
+
 
 ```python
 import electromyogram as emg
@@ -52,12 +54,13 @@ powermap = emg.interpolate(scheme, data_values, shape=(1024, 1024))
 powermap = emg.colorize(powermap, cmap='viridis')
 ```
 
-For the colorization, the users can use any color map from [matplotlib](https://matplotlib.org/stable/tutorials/colors/colormaps.html) or [pallettable](https://jiffyclub.github.io/palettable/) (e.g., `pallettable.`scientific.sequential.Imola20`)
+For the colorization, the users can use any color map from [matplotlib](https://matplotlib.org/stable/tutorials/colors/colormaps.html) or [pallettable](https://jiffyclub.github.io/palettable/) (e.g., `pallettable.scientific.sequential.Imola_20`)
 ![Colors](files/colorization.jpg)
 
 ## Surface EMG Schematics
 
 We currently support the two following schematics for acquiring the EMG data.
+If you want to have your own, please open an issue or create a pull request, and we will be happy to add it.
 
 | [Fridlund and Cappacio, 1986](https://pubmed.ncbi.nlm.nih.gov/3809364/) | [Kuramoto et al., 2019](https://onlinelibrary.wiley.com/doi/10.1002/npr2.12059) |
 |---|---|
@@ -69,10 +72,10 @@ Then use it in the `interpolate` function, and you are good to go.
 ## Todos
 
 - [ ] Handle if not all values are given for a better schematic
-- [ ] Add result images
-- [ ] Add a function to draw triangulation onto the 2D canvas
+- [X] Add result images
+- [X] Add a function to draw triangulation onto the 2D canvas
 - [ ] Add a function to draw sensor locations onto the 2D canvas
-- [ ] Add the option to remove the area outside the canonical face model
+- [X] Add the option to remove the area outside the canonical face model
 - [ ] Make a better interface for the channel names
 - [ ] Add function to create the according colorbar for matplotlib in the correct size
 
