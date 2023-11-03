@@ -177,8 +177,7 @@ def __interpolate(
         The maximum value of the EMG values. Defaults to None and will be set to the maximum value of the EMG values.
     """
 
-    if not scheme.valid(emg_values):
-        raise ValueError("Either missing or invalid EMG keys/values in dict")
+    scheme.valid(emg_values) # this raises a ValueError if the values are not valid
 
     canvas = np.zeros(shape, dtype=np.float32)
     keys_sorted_semg = sorted(scheme.locations.keys())
