@@ -7,6 +7,7 @@ __all__ = [
     "colorize",
     "get_colormap",
     "annotate_locations",
+    "postprocess"
 ]
 
 from electromyogram.plot import (
@@ -15,6 +16,7 @@ from electromyogram.plot import (
     get_colormap,
     interpolate,
     plot_locations,
+    postprocess,
 )
 
 from electromyogram.schemes import Fridlund, Kuramoto, Scheme
