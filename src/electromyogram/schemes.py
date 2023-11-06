@@ -12,8 +12,6 @@ import numpy as np
 from . import consts
 from .utils import abs_to_rel
 
-DEFAULT_SIZE_PX = 4096
-
 class Scheme(abc.ABC):
     """Scheme for plotting the EMG values on a 2D canvas.
 

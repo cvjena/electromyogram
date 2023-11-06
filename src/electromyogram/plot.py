@@ -12,7 +12,7 @@ from matplotlib import pyplot as plt
 from scipy import interpolate as interp
 
 from . import consts
-from .schemes import DEFAULT_SIZE_PX, Scheme
+from .schemes import Scheme
 from .utils import rel_to_abs
 
 @dataclass
@@ -66,13 +66,11 @@ def annotate_locations(
 
 def plot_locations(
     scheme: Scheme,
-    shape: tuple[int, int] = (2048, 2048),
-    draw_outer_hull: bool = True,
-    canvas_: Optional[np.ndarray] = None,
-    fontScale: float = 2,
+    shape: tuple[int, int] = (512, 512),
+    fontScale: float = 0.5,
     thickness: int = 2,
-    radius: int = 50,
-    fontColor: tuple[int, int, int] = (255, 255, 255),
+    radius: int = 8,
+    do_postprocess: bool = True, 
 ) -> np.ndarray:
     """Plot the locations of the EMG values on a 2D canvas.
 
@@ -95,49 +93,39 @@ def plot_locations(
     np.ndarray
         The canvas with the plotted EMG values.
     """
-    if canvas_ is None:
-        canvas = np.zeros((*shape, 3), dtype=np.uint8)
-    else:
-        canvas = canvas_.copy()
+    
+    # TODO: make the circle color customizable
 
-    # assert dim == 3
-    assert canvas.ndim == 3
+    canvas = np.full((shape[0], shape[1], 3), fill_value=255, dtype=np.uint8)
+    if do_postprocess:
+        canvas = postprocess(canvas, remove_outer=True, draw_triangle=True)
 
-    if canvas.shape[:2] != shape:
-        canvas = cv2.resize(canvas, shape, interpolation=cv2.INTER_AREA)
-
-    scale_factor = shape[0] / DEFAULT_SIZE_PX
+    scale_factor = shape[0] / 512 # all values are relative to a 512x512 canvas and optimized for that size
 
     fontFace = cv2.FONT_HERSHEY_SIMPLEX
+    lineType = cv2.LINE_AA
     fontScale = fontScale * scale_factor
-    thickness = int(thickness * scale_factor)
-    radius = int(radius * scale_factor)
+    
+    thickness_o = int(thickness * scale_factor)
+    thickness_i = int((thickness * 0.6) * scale_factor)
 
-    def _draw(img: np.ndarray, text: str, x: int, y: int, color: tuple = (0, 0, 255), outer: bool = False):
-        if not outer:
-            cv2.circle(img, (x, y), radius, color, -1)
-        else:
-            cv2.ellipse(img, (x, y), (radius * 3 // 4, radius), 0, 0, 360, color, -1)
-
-        text_size, _ = cv2.getTextSize(text, fontFace, fontScale, thickness)
-        text_x = x - text_size[0] // 2
-        text_y = y + text_size[1] // 2
-
-        cv2.putText(img, text, (text_x, text_y), fontFace, fontScale, fontColor, thickness)
+    # have an inner and outer radius for the circle to "emulate" an black outline
+    radius_o = int(radius * scale_factor)
+    radius_i = int((radius * 0.8) * scale_factor)
 
     for emg_name, emg_loc in scheme.locations.items():
         name = scheme.shortcuts.get(emg_name, emg_name)
         x, y = rel_to_abs(emg_loc[0], emg_loc[1], size=shape)
 
-        canvas = cv2.circle(canvas, (x, y), 18, (0, 0, 0), -1)
-        canvas = cv2.circle(canvas, (x, y), 15, (255, 105, 180), -1)
+        canvas = cv2.circle(canvas, (x, y), radius=radius_o, color=(  0,   0,   0), thickness=-1, lineType=lineType)
+        canvas = cv2.circle(canvas, (x, y), radius=radius_i, color=(255, 105, 180), thickness=-1, lineType=lineType)
 
-        text_size = cv2.getTextSize(name, cv2.FONT_HERSHEY_COMPLEX, 2, 5)[0]
+        text_size = cv2.getTextSize(name, fontFace=fontFace, fontScale=fontScale, thickness=thickness)[0]
         x -= text_size[0] // 2
-        y += int(text_size[1] * 1.5)
+        y += int(text_size[1]) + int(radius_o * 1.3)
 
-        canvas = cv2.putText(canvas, name, (x, y), cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 0, 0), 8, cv2.LINE_AA)
-        canvas = cv2.putText(canvas, name, (x, y), cv2.FONT_HERSHEY_SIMPLEX, 2, (255, 255, 255), 6, cv2.LINE_AA)
+        canvas = cv2.putText(canvas, name, (x, y), fontFace=fontFace, fontScale=fontScale, color=(  0,   0,   0), thickness=thickness_o, lineType=lineType)
+        canvas = cv2.putText(canvas, name, (x, y), fontFace=fontFace, fontScale=fontScale, color=(255, 255, 255), thickness=thickness_i, lineType=lineType)
 
     return canvas
 
