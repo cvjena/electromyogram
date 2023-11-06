@@ -329,6 +329,8 @@ def postprocess(
     invert: bool = False,
     scheme: Optional[Scheme] = None,
 ) -> np.ndarray:
+    powermap = powermap.copy()
+    
     # scale the points to the current shape
     points = (face_model.points * powermap.shape[0]).astype(np.int32)
     thickness = math.ceil(powermap.shape[0] / 512) # thickness of the lines optimized for a 512x512 canvas
@@ -338,11 +340,18 @@ def postprocess(
         lines = np.zeros_like(powermap)
         lines = cv2.polylines(lines, [points[tri] for tri in face_model.triangles], isClosed=True, color=color, thickness=thickness)
         
+        mask = np.zeros_like(powermap)
+        mask[lines != 0] = 1
+
         if invert:
             lines = cv2.bitwise_not(lines)
- 
-        powermap = cv2.addWeighted(powermap, 1-triangles_alpha, lines, triangles_alpha, 0)
-    
+            
+        lines_masked = lines * mask
+        power_masked = powermap * mask
+
+        temp_blend = cv2.addWeighted(power_masked, 1-triangles_alpha, lines_masked, triangles_alpha, 0)
+        powermap[mask == 1] = temp_blend[mask == 1]
+
     if remove_outer:
         hull = cv2.convexHull(points, returnPoints=True)
         mask = cv2.drawContours(np.zeros(powermap.shape[:2]), [hull], 0, 1, -1)
