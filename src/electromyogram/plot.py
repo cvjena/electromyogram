@@ -99,7 +99,7 @@ def plot_locations(
 
     canvas = np.full((shape[0], shape[1], 3), fill_value=255, dtype=np.uint8)
     if do_postprocess:
-        canvas = postprocess(canvas, remove_outer=True, draw_triangle=True)
+        canvas = postprocess(canvas, remove_outer=True, draw_triangle=True, invert=True)
 
     scale_factor = shape[0] / 512 # all values are relative to a 512x512 canvas and optimized for that size
 
@@ -313,6 +313,7 @@ def postprocess(
     remove_outer: bool = True,
     draw_triangle: bool = True,
     triangles_alpha: float = 0.3,
+    invert: bool = False,
 ) -> np.ndarray:
     # scale the points to the current shape
     points = (face_model.points * powermap.shape[0]).astype(np.int32)
@@ -322,6 +323,10 @@ def postprocess(
         color = 255 if powermap.ndim != 3 else (255, 255, 255)
         lines = np.zeros_like(powermap)
         lines = cv2.polylines(lines, [points[tri] for tri in face_model.triangles], isClosed=True, color=color, thickness=thickness)
+        
+        if invert:
+            lines = cv2.bitwise_not(lines)
+ 
         powermap = cv2.addWeighted(powermap, 1-triangles_alpha, lines, triangles_alpha, 0)
     
     if remove_outer:
