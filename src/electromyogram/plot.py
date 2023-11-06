@@ -12,7 +12,6 @@ import numpy as np
 from matplotlib import pyplot as plt
 from scipy import interpolate as interp
 
-from . import consts
 from .schemes import Scheme
 from .utils import rel_to_abs
 
@@ -22,6 +21,14 @@ class FaceModel:
     triangles: np.ndarray
     facets: np.ndarray
     masking: np.ndarray
+    
+    def get_outer(self, shape:tuple[int, int]) -> np.ndarray:
+        # points = np.array([rel_to_abs(x, y, shape) for x, y in ])
+        points = np.copy(self.points)
+        points[:, 0] *= shape[0]
+        points[:, 1] *= shape[1]
+        points = points.astype(np.int32)
+        return cv2.convexHull(points, returnPoints=True).reshape(-1, 2)
 
 face_model_data = h5py.File(Path(__file__).parent / "face_model.h5", "r")
 
@@ -72,7 +79,8 @@ def plot_locations(
     thickness: int = 2,
     radius: int = 7,
     color_circle: tuple[int, int, int] = (255, 105, 180),
-    do_postprocess: bool = True, 
+    do_postprocess: bool = True,
+    draw_outerhull: bool = False, 
 ) -> np.ndarray:
     """Plot the locations of the EMG values on a 2D canvas.
 
@@ -126,6 +134,9 @@ def plot_locations(
         canvas = cv2.putText(canvas, name, (x, y), fontFace=fontFace, fontScale=fontScale, color=(  0,   0,   0), thickness=thickness_o, lineType=lineType)
         canvas = cv2.putText(canvas, name, (x, y), fontFace=fontFace, fontScale=fontScale, color=(255, 255, 255), thickness=thickness_i, lineType=lineType)
 
+    if draw_outerhull:
+        for x, y in face_model.get_outer(shape=shape):
+            canvas = cv2.drawMarker(canvas, (x, y), markerType=cv2.MARKER_DIAMOND, color=(0, 0, 0), markerSize=radius_o, thickness=thickness_i)
     return canvas
 
 
