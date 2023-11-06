@@ -74,7 +74,7 @@ Then use it in the `interpolate` function, and you are good to go.
 - [ ] Handle if not all values are given for a better schematic
 - [X] Add result images
 - [X] Add a function to draw triangulation onto the 2D canvas
-- [ ] Add a function to draw sensor locations onto the 2D canvas
+- [X] Add a function to draw sensor locations onto the 2D canvas
 - [X] Add the option to remove the area outside the canonical face model
 - [ ] Make a better interface for the channel names
 - [ ] Add function to create the according colorbar for matplotlib in the correct size
