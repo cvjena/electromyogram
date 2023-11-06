@@ -2,6 +2,7 @@ __all__ = ["interpolate", "plot_locations", "colorize", "get_colormap", "annotat
 
 
 from dataclasses import dataclass
+import math
 from typing import Optional, Type, Union
 from pathlib import Path
 
@@ -312,15 +313,16 @@ def postprocess(
     powermap: np.ndarray,
     remove_outer: bool = True,
     draw_triangle: bool = True,
-    triangles_alpha: float = 0.2,
+    triangles_alpha: float = 0.3,
 ) -> np.ndarray:
     # scale the points to the current shape
     points = (face_model.points * powermap.shape[0]).astype(np.int32)
+    thickness = math.ceil(powermap.shape[0] / 512) # thickness of the lines optimized for a 512x512 canvas
     
     if draw_triangle:
         color = 255 if powermap.ndim != 3 else (255, 255, 255)
         lines = np.zeros_like(powermap)
-        lines = cv2.polylines(lines, [points[tri] for tri in face_model.triangles], True, color, thickness=1)
+        lines = cv2.polylines(lines, [points[tri] for tri in face_model.triangles], isClosed=True, color=color, thickness=thickness)
         powermap = cv2.addWeighted(powermap, 1-triangles_alpha, lines, triangles_alpha, 0)
     
     if remove_outer:
