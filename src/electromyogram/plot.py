@@ -81,7 +81,8 @@ def plot_locations(
     radius: int = 7,
     color_circle: tuple[int, int, int] = (255, 105, 180),
     do_postprocess: bool = True,
-    draw_outerhull: bool = False, 
+    draw_outerhull: bool = False,
+    canvas: Optional[np.ndarray] = None,
 ) -> np.ndarray:
     """Plot the locations of the EMG values on a 2D canvas.
 
@@ -104,7 +105,8 @@ def plot_locations(
     np.ndarray
         The canvas with the plotted EMG values.
     """
-    canvas = np.full((shape[0], shape[1], 3), fill_value=255, dtype=np.uint8)
+    if canvas is None:
+        canvas = np.full((shape[0], shape[1], 3), fill_value=255, dtype=np.uint8)
     if do_postprocess:
         canvas = postprocess(canvas, remove_outer=True, draw_triangle=True, invert=True)
 
@@ -322,8 +324,10 @@ def postprocess(
     powermap: np.ndarray,
     remove_outer: bool = True,
     draw_triangle: bool = True,
+    draw_locations: bool = False,
     triangles_alpha: float = 0.3,
     invert: bool = False,
+    scheme: Optional[Scheme] = None,
 ) -> np.ndarray:
     # scale the points to the current shape
     points = (face_model.points * powermap.shape[0]).astype(np.int32)
@@ -344,4 +348,8 @@ def postprocess(
         mask = cv2.drawContours(np.zeros(powermap.shape[:2]), [hull], 0, 1, -1)
         powermap[mask == 0] = 255 if powermap.ndim != 3 else [255, 255, 255]
         
+    if draw_locations:
+        assert scheme is not None, "scheme must not be None if draw_locations is True"
+        powermap = plot_locations(scheme=scheme, shape=powermap.shape[:2], do_postprocess=False, canvas=powermap)
+
     return powermap
