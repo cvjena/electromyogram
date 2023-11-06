@@ -1,4 +1,4 @@
-__all__ = ["interpolate", "plot_locations", "colorize", "get_colormap", "annotate_locations", "postprocess"]
+__all__ = ["interpolate", "plot_locations", "colorize", "get_colormap", "postprocess"]
 
 
 from dataclasses import dataclass
@@ -41,37 +41,6 @@ face_model = FaceModel(
 )
 
 face_model_data.close()
-
-def annotate_locations(
-    ax: plt.Axes,
-    scheme: Scheme,
-    dims: tuple[int, int] = (512, 512),
-    fontsize: int = 8,
-    marker_size: int = 3,
-    marker_color: str = "black",
-    draw_outer_hull: bool = False,
-    text_offset: tuple[int, int] = (0, 10),
-):
-    for emg_name, emg_loc in scheme.locations.items():
-        x, y = rel_to_abs(emg_loc[0], emg_loc[1], size=dims)
-        name = scheme.shortcuts.get(emg_name, emg_name)
-
-        ax.plot(x, y, marker=".", color=marker_color, markersize=marker_size)
-        ax.annotate(
-            name,
-            (x - text_offset[0], y - text_offset[1]),
-            xycoords="data",
-            va="bottom",
-            ha="center",
-            color="black",
-            fontsize=fontsize,
-        )
-
-    if draw_outer_hull:
-        for name, loc in scheme.outer_dict.items():
-            x, y = rel_to_abs(loc[0], loc[1], size=dims)
-            ax.plot(x, y, marker="D", color="green", markersize=marker_size // 2)
-
 
 def plot_locations(
     scheme: Scheme,
