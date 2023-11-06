@@ -12,6 +12,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 from scipy import interpolate as interp
 
+from .consts import parula_colormap
 from .schemes import Scheme
 from .utils import rel_to_abs
 
@@ -242,7 +243,7 @@ def get_colormap(
             # this is a bit janky, as matplotlib.colormaps is actually deprecated
             colormap = matplotlib.cm.get_cmap(cmap_name)
         elif cmap_name == "parula":
-            colormap = matplotlib.colors.LinearSegmentedColormap.from_list("parula", consts.parula_colormap)
+            colormap = matplotlib.colors.LinearSegmentedColormap.from_list("parula", parula_colormap)
         else:
             raise ValueError(f"{cmap_name} is not a valid colormap name")
 
