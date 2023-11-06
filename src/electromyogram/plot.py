@@ -1,4 +1,4 @@
-__all__ = ["interpolate", "plot_locations", "colorize", "get_colormap", "annotate_locations", "postprocess"]
+__all__ = ["interpolate", "plot_locations", "colorize", "get_colormap", "postprocess"]
 
 
 from dataclasses import dataclass
@@ -42,37 +42,6 @@ face_model = FaceModel(
 
 face_model_data.close()
 
-def annotate_locations(
-    ax: plt.Axes,
-    scheme: Scheme,
-    dims: tuple[int, int] = (512, 512),
-    fontsize: int = 8,
-    marker_size: int = 3,
-    marker_color: str = "black",
-    draw_outer_hull: bool = False,
-    text_offset: tuple[int, int] = (0, 10),
-):
-    for emg_name, emg_loc in scheme.locations.items():
-        x, y = rel_to_abs(emg_loc[0], emg_loc[1], size=dims)
-        name = scheme.shortcuts.get(emg_name, emg_name)
-
-        ax.plot(x, y, marker=".", color=marker_color, markersize=marker_size)
-        ax.annotate(
-            name,
-            (x - text_offset[0], y - text_offset[1]),
-            xycoords="data",
-            va="bottom",
-            ha="center",
-            color="black",
-            fontsize=fontsize,
-        )
-
-    if draw_outer_hull:
-        for name, loc in scheme.outer_dict.items():
-            x, y = rel_to_abs(loc[0], loc[1], size=dims)
-            ax.plot(x, y, marker="D", color="green", markersize=marker_size // 2)
-
-
 def plot_locations(
     scheme: Scheme,
     shape: tuple[int, int] = (512, 512),
@@ -81,7 +50,8 @@ def plot_locations(
     radius: int = 7,
     color_circle: tuple[int, int, int] = (255, 105, 180),
     do_postprocess: bool = True,
-    draw_outerhull: bool = False, 
+    draw_outerhull: bool = False,
+    canvas: Optional[np.ndarray] = None,
 ) -> np.ndarray:
     """Plot the locations of the EMG values on a 2D canvas.
 
@@ -104,7 +74,8 @@ def plot_locations(
     np.ndarray
         The canvas with the plotted EMG values.
     """
-    canvas = np.full((shape[0], shape[1], 3), fill_value=255, dtype=np.uint8)
+    if canvas is None:
+        canvas = np.full((shape[0], shape[1], 3), fill_value=255, dtype=np.uint8)
     if do_postprocess:
         canvas = postprocess(canvas, remove_outer=True, draw_triangle=True, invert=True)
 
@@ -322,9 +293,13 @@ def postprocess(
     powermap: np.ndarray,
     remove_outer: bool = True,
     draw_triangle: bool = True,
+    draw_locations: bool = False,
     triangles_alpha: float = 0.3,
     invert: bool = False,
+    scheme: Optional[Scheme] = None,
 ) -> np.ndarray:
+    powermap = powermap.copy()
+    
     # scale the points to the current shape
     points = (face_model.points * powermap.shape[0]).astype(np.int32)
     thickness = math.ceil(powermap.shape[0] / 512) # thickness of the lines optimized for a 512x512 canvas
@@ -334,14 +309,25 @@ def postprocess(
         lines = np.zeros_like(powermap)
         lines = cv2.polylines(lines, [points[tri] for tri in face_model.triangles], isClosed=True, color=color, thickness=thickness)
         
+        mask = np.zeros_like(powermap)
+        mask[lines != 0] = 1
+
         if invert:
             lines = cv2.bitwise_not(lines)
- 
-        powermap = cv2.addWeighted(powermap, 1-triangles_alpha, lines, triangles_alpha, 0)
-    
+            
+        lines_masked = lines * mask
+        power_masked = powermap * mask
+
+        temp_blend = cv2.addWeighted(power_masked, 1-triangles_alpha, lines_masked, triangles_alpha, 0)
+        powermap[mask == 1] = temp_blend[mask == 1]
+
     if remove_outer:
         hull = cv2.convexHull(points, returnPoints=True)
         mask = cv2.drawContours(np.zeros(powermap.shape[:2]), [hull], 0, 1, -1)
         powermap[mask == 0] = 255 if powermap.ndim != 3 else [255, 255, 255]
         
+    if draw_locations:
+        assert scheme is not None, "scheme must not be None if draw_locations is True"
+        powermap = plot_locations(scheme=scheme, shape=powermap.shape[:2], do_postprocess=False, canvas=powermap)
+
     return powermap

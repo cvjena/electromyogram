@@ -6,12 +6,10 @@ __all__ = [
     "Scheme",
     "colorize",
     "get_colormap",
-    "annotate_locations",
     "postprocess"
 ]
 
 from electromyogram.plot import (
-    annotate_locations,
     colorize,
     get_colormap,
     interpolate,
