@@ -261,7 +261,6 @@ def colorize(
     cmap: Optional[Union[str, Type]] = "viridis",
     vmin: Optional[float] = None,
     vmax: Optional[float] = None,
-    white_background: bool = False,
 ) -> np.ndarray:
     """Colorize an electromyogram interpolation using a given colormap
 
