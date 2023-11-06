@@ -2,6 +2,7 @@ __all__ = ["interpolate", "plot_locations", "colorize", "get_colormap", "annotat
 
 
 from dataclasses import dataclass
+import math
 from typing import Optional, Type, Union
 from pathlib import Path
 
@@ -11,8 +12,8 @@ import numpy as np
 from matplotlib import pyplot as plt
 from scipy import interpolate as interp
 
-from . import consts
-from .schemes import DEFAULT_SIZE_PX, Scheme
+from .consts import parula_colormap
+from .schemes import Scheme
 from .utils import rel_to_abs
 
 @dataclass
@@ -21,6 +22,14 @@ class FaceModel:
     triangles: np.ndarray
     facets: np.ndarray
     masking: np.ndarray
+    
+    def get_outer(self, shape:tuple[int, int]) -> np.ndarray:
+        # points = np.array([rel_to_abs(x, y, shape) for x, y in ])
+        points = np.copy(self.points)
+        points[:, 0] *= shape[0]
+        points[:, 1] *= shape[1]
+        points = points.astype(np.int32)
+        return cv2.convexHull(points, returnPoints=True).reshape(-1, 2)
 
 face_model_data = h5py.File(Path(__file__).parent / "face_model.h5", "r")
 
@@ -66,13 +75,13 @@ def annotate_locations(
 
 def plot_locations(
     scheme: Scheme,
-    shape: tuple[int, int] = (2048, 2048),
-    draw_outer_hull: bool = True,
-    canvas_: Optional[np.ndarray] = None,
-    fontScale: float = 2,
+    shape: tuple[int, int] = (512, 512),
+    fontScale: float = 0.5,
     thickness: int = 2,
-    radius: int = 50,
-    fontColor: tuple[int, int, int] = (255, 255, 255),
+    radius: int = 7,
+    color_circle: tuple[int, int, int] = (255, 105, 180),
+    do_postprocess: bool = True,
+    draw_outerhull: bool = False, 
 ) -> np.ndarray:
     """Plot the locations of the EMG values on a 2D canvas.
 
@@ -95,50 +104,40 @@ def plot_locations(
     np.ndarray
         The canvas with the plotted EMG values.
     """
-    if canvas_ is None:
-        canvas = np.zeros((*shape, 3), dtype=np.uint8)
-    else:
-        canvas = canvas_.copy()
+    canvas = np.full((shape[0], shape[1], 3), fill_value=255, dtype=np.uint8)
+    if do_postprocess:
+        canvas = postprocess(canvas, remove_outer=True, draw_triangle=True, invert=True)
 
-    # assert dim == 3
-    assert canvas.ndim == 3
-
-    if canvas.shape[:2] != shape:
-        canvas = cv2.resize(canvas, shape, interpolation=cv2.INTER_AREA)
-
-    scale_factor = shape[0] / DEFAULT_SIZE_PX
+    scale_factor = shape[0] / 512 # all values are relative to a 512x512 canvas and optimized for that size
 
     fontFace = cv2.FONT_HERSHEY_SIMPLEX
+    lineType = cv2.LINE_AA
     fontScale = fontScale * scale_factor
-    thickness = int(thickness * scale_factor)
-    radius = int(radius * scale_factor)
+    
+    thickness_o = int(thickness * scale_factor)
+    thickness_i = int((thickness * 0.6) * scale_factor)
 
-    def _draw(img: np.ndarray, text: str, x: int, y: int, color: tuple = (0, 0, 255), outer: bool = False):
-        if not outer:
-            cv2.circle(img, (x, y), radius, color, -1)
-        else:
-            cv2.ellipse(img, (x, y), (radius * 3 // 4, radius), 0, 0, 360, color, -1)
-
-        text_size, _ = cv2.getTextSize(text, fontFace, fontScale, thickness)
-        text_x = x - text_size[0] // 2
-        text_y = y + text_size[1] // 2
-
-        cv2.putText(img, text, (text_x, text_y), fontFace, fontScale, fontColor, thickness)
+    # have an inner and outer radius for the circle to "emulate" an black outline
+    radius_o = int(radius * scale_factor)
+    radius_i = int((radius * 0.8) * scale_factor)
 
     for emg_name, emg_loc in scheme.locations.items():
         name = scheme.shortcuts.get(emg_name, emg_name)
         x, y = rel_to_abs(emg_loc[0], emg_loc[1], size=shape)
 
-        canvas = cv2.circle(canvas, (x, y), 18, (0, 0, 0), -1)
-        canvas = cv2.circle(canvas, (x, y), 15, (255, 105, 180), -1)
+        canvas = cv2.circle(canvas, (x, y), radius=radius_o, color=( 0, 0, 0),   thickness=-1, lineType=lineType)
+        canvas = cv2.circle(canvas, (x, y), radius=radius_i, color=color_circle, thickness=-1, lineType=lineType)
 
-        text_size = cv2.getTextSize(name, cv2.FONT_HERSHEY_COMPLEX, 2, 5)[0]
+        text_size = cv2.getTextSize(name, fontFace=fontFace, fontScale=fontScale, thickness=thickness)[0]
         x -= text_size[0] // 2
-        y += int(text_size[1] * 1.5)
+        y += int(text_size[1]) + int(radius_o * 1.3)
 
-        canvas = cv2.putText(canvas, name, (x, y), cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 0, 0), 8, cv2.LINE_AA)
-        canvas = cv2.putText(canvas, name, (x, y), cv2.FONT_HERSHEY_SIMPLEX, 2, (255, 255, 255), 6, cv2.LINE_AA)
+        canvas = cv2.putText(canvas, name, (x, y), fontFace=fontFace, fontScale=fontScale, color=(  0,   0,   0), thickness=thickness_o, lineType=lineType)
+        canvas = cv2.putText(canvas, name, (x, y), fontFace=fontFace, fontScale=fontScale, color=(255, 255, 255), thickness=thickness_i, lineType=lineType)
 
+    if draw_outerhull:
+        for x, y in face_model.get_outer(shape=shape):
+            canvas = cv2.drawMarker(canvas, (x, y), markerType=cv2.MARKER_DIAMOND, color=(0, 0, 0), markerSize=radius_o, thickness=thickness_i)
     return canvas
 
 
@@ -244,7 +243,7 @@ def get_colormap(
             # this is a bit janky, as matplotlib.colormaps is actually deprecated
             colormap = matplotlib.cm.get_cmap(cmap_name)
         elif cmap_name == "parula":
-            colormap = matplotlib.colors.LinearSegmentedColormap.from_list("parula", consts.parula_colormap)
+            colormap = matplotlib.colors.LinearSegmentedColormap.from_list("parula", parula_colormap)
         else:
             raise ValueError(f"{cmap_name} is not a valid colormap name")
 
@@ -272,7 +271,6 @@ def colorize(
     cmap: Optional[Union[str, Type]] = "viridis",
     vmin: Optional[float] = None,
     vmax: Optional[float] = None,
-    white_background: bool = False,
 ) -> np.ndarray:
     """Colorize an electromyogram interpolation using a given colormap
 
@@ -324,15 +322,21 @@ def postprocess(
     powermap: np.ndarray,
     remove_outer: bool = True,
     draw_triangle: bool = True,
-    triangles_alpha: float = 0.2,
+    triangles_alpha: float = 0.3,
+    invert: bool = False,
 ) -> np.ndarray:
     # scale the points to the current shape
     points = (face_model.points * powermap.shape[0]).astype(np.int32)
+    thickness = math.ceil(powermap.shape[0] / 512) # thickness of the lines optimized for a 512x512 canvas
     
     if draw_triangle:
         color = 255 if powermap.ndim != 3 else (255, 255, 255)
         lines = np.zeros_like(powermap)
-        lines = cv2.polylines(lines, [points[tri] for tri in face_model.triangles], True, color, thickness=1)
+        lines = cv2.polylines(lines, [points[tri] for tri in face_model.triangles], isClosed=True, color=color, thickness=thickness)
+        
+        if invert:
+            lines = cv2.bitwise_not(lines)
+ 
         powermap = cv2.addWeighted(powermap, 1-triangles_alpha, lines, triangles_alpha, 0)
     
     if remove_outer:
