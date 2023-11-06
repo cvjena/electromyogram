@@ -70,7 +70,8 @@ def plot_locations(
     shape: tuple[int, int] = (512, 512),
     fontScale: float = 0.5,
     thickness: int = 2,
-    radius: int = 8,
+    radius: int = 7,
+    color_circle: tuple[int, int, int] = (255, 105, 180),
     do_postprocess: bool = True, 
 ) -> np.ndarray:
     """Plot the locations of the EMG values on a 2D canvas.
@@ -94,9 +95,6 @@ def plot_locations(
     np.ndarray
         The canvas with the plotted EMG values.
     """
-    
-    # TODO: make the circle color customizable
-
     canvas = np.full((shape[0], shape[1], 3), fill_value=255, dtype=np.uint8)
     if do_postprocess:
         canvas = postprocess(canvas, remove_outer=True, draw_triangle=True, invert=True)
@@ -118,8 +116,8 @@ def plot_locations(
         name = scheme.shortcuts.get(emg_name, emg_name)
         x, y = rel_to_abs(emg_loc[0], emg_loc[1], size=shape)
 
-        canvas = cv2.circle(canvas, (x, y), radius=radius_o, color=(  0,   0,   0), thickness=-1, lineType=lineType)
-        canvas = cv2.circle(canvas, (x, y), radius=radius_i, color=(255, 105, 180), thickness=-1, lineType=lineType)
+        canvas = cv2.circle(canvas, (x, y), radius=radius_o, color=( 0, 0, 0),   thickness=-1, lineType=lineType)
+        canvas = cv2.circle(canvas, (x, y), radius=radius_i, color=color_circle, thickness=-1, lineType=lineType)
 
         text_size = cv2.getTextSize(name, fontFace=fontFace, fontScale=fontScale, thickness=thickness)[0]
         x -= text_size[0] // 2
