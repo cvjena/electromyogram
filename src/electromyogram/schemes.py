@@ -24,24 +24,14 @@ class Scheme(abc.ABC):
 
     pairs_L: Optional[list[str]] = None
     pairs_R: Optional[list[str]] = None
-    mapping: dict[str, str] = None
+    mapping: dict[str, str] = {}
 
     locations: dict[str, tuple[float, float]] = None
 
     def __init__(self) -> None:
         if self.locations is None:
             raise ValueError("Locations have to be implemented by the sub classes.")
-        
-        # TODO we should only do this is they want to mirror the values
-        if self.pairs_L is None:
-            raise ValueError("Pair values have to be implemented by the sub classes.")
-        if self.pairs_R is None:
-            raise ValueError("Pair values have to be implemented by the sub classes.")
-        if len(self.pairs_L) != len(self.pairs_R):
-            raise ValueError("Number of pairs have to be the same.")
-        if self.mapping is None:
-            raise ValueError("Shortcuts have to be implemented by the sub classes.")
-        
+ 
         self.outer_hull = cv2.convexHull(consts.FACE_COORDS, returnPoints=True).reshape(-1, 2)
         self.outer_hull = np.array([abs_to_rel(x, y, (4096, 4096)) for x, y in self.outer_hull])
         self.outer_dict = {f"O{i}": (x, y) for i, (x, y) in enumerate(self.outer_hull)}
