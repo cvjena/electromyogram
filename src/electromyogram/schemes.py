@@ -31,6 +31,8 @@ class Scheme(abc.ABC):
     def __init__(self) -> None:
         if self.locations is None:
             raise ValueError("Locations have to be implemented by the sub classes.")
+        
+        # TODO we should only do this is they want to mirror the values
         if self.pairs_L is None:
             raise ValueError("Pair values have to be implemented by the sub classes.")
         if self.pairs_R is None:
