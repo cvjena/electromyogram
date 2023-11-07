@@ -46,7 +46,11 @@ class Scheme(abc.ABC):
         self.outer_hull = np.array([abs_to_rel(x, y, (4096, 4096)) for x, y in self.outer_hull])
         self.outer_dict = {f"O{i}": (x, y) for i, (x, y) in enumerate(self.outer_hull)}
 
-    def validify(self, emg_values: dict[str, float]) -> dict[str, float]:
+    def validify(
+        self, 
+        emg_values: dict[str, float],
+        missing_value: float = 0.0,
+    ) -> dict[str, float]:
         """
         This function checks if the given emg key+value pairs are valid.
         It attempts to fix replace the key by checking if the key is in the locations,
@@ -64,6 +68,10 @@ class Scheme(abc.ABC):
             key = emg_name if emg_name in self.locations else self.mapping[emg_name]
             valid_dict[key] = emg_value, self.locations[key]
             
+        # add the missing values
+        for key in self.locations.keys():
+            if key not in valid_dict:
+                valid_dict[key] = missing_value, self.locations[key]
         return valid_dict
 
     def _check_value(self, emg_value: float) -> bool:

@@ -9,7 +9,6 @@ from pathlib import Path
 import cv2
 import h5py
 import numpy as np
-from matplotlib import pyplot as plt
 from scipy import interpolate as interp
 
 from .consts import parula_colormap
@@ -120,18 +119,19 @@ def interpolate(
     vmax: Optional[float] = None,
     mirror: bool = False,
     mirror_plane_width: int = 2,
+    missing_value: float = 0.0,
 ) -> Union[np.ndarray, tuple[np.ndarray, np.ndarray, np.ndarray]]:
     if not mirror:
-        return __interpolate(scheme, emg_values, shape, vmin, vmax)
+        return __interpolate(scheme, emg_values, shape, vmin, vmax, missing_value)
 
     emg_values_mirrored_l, emg_values_mirrored_r = scheme.mirror(emg_values)
 
     if vmax is None:
         vmax = max(emg_values.values())
 
-    interpolation_n = __interpolate(scheme, emg_values, shape, vmin, vmax)
-    interpolation_l = __interpolate(scheme, emg_values_mirrored_l, shape, vmin, vmax)
-    interpolation_r = __interpolate(scheme, emg_values_mirrored_r, shape, vmin, vmax)
+    interpolation_n = __interpolate(scheme, emg_values,            shape, vmin, vmax, missing_value)
+    interpolation_l = __interpolate(scheme, emg_values_mirrored_l, shape, vmin, vmax, missing_value)
+    interpolation_r = __interpolate(scheme, emg_values_mirrored_r, shape, vmin, vmax, missing_value)
 
     # draw a vertical line in the mirrored images to indicate the mirror plane
     middle_slice = slice(shape[1] // 2 - mirror_plane_width, shape[1] // 2 + mirror_plane_width)
@@ -147,6 +147,7 @@ def __interpolate(
     shape: tuple[int, int] = (512, 512),
     vmin: float = 0.0,
     vmax: Optional[float] = None,
+    missing_value: float = 0.0,
 ) -> np.ndarray:
     """Interpolate the EMG values to a 2D canvas.
 
@@ -169,7 +170,7 @@ def __interpolate(
         The maximum value of the EMG values. Defaults to None and will be set to the maximum value of the EMG values.
     """
 
-    emg_values = scheme.validify(emg_values)
+    emg_values = scheme.validify(emg_values, missing_value=missing_value)
 
     canvas = np.zeros(shape, dtype=np.float32)
     keys_sorted_semg = sorted(scheme.locations.keys())
