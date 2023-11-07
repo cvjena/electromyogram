@@ -1,9 +1,6 @@
 __all__ = ["Scheme", "Kuramoto", "Fridlund"]
 
 import abc
-import datetime
-import json
-from pathlib import Path
 from typing import Optional
 
 import cv2
@@ -11,6 +8,7 @@ import numpy as np
 
 from . import consts
 from .utils import abs_to_rel
+
 
 class Scheme(abc.ABC):
     """Scheme for plotting the EMG values on a 2D canvas.
@@ -23,13 +21,25 @@ class Scheme(abc.ABC):
     The horizontal axis is the "Frankfort horizontal plane" (y=0).
 
     """
+
     pairs_L: Optional[list[str]] = None
     pairs_R: Optional[list[str]] = None
-    shortcuts: dict[str, str] = {}
+    shortcuts: dict[str, str] = None
 
+    locations: dict[str, tuple[float, float]] = None
 
     def __init__(self) -> None:
-        self.locations: dict[str, tuple[int, int]] = self.load_locs()
+        if self.locations is None:
+            raise ValueError("Locations have to be implemented by the sub classes.")
+        if self.pairs_L is None:
+            raise ValueError("Pair values have to be implemented by the sub classes.")
+        if self.pairs_R is None:
+            raise ValueError("Pair values have to be implemented by the sub classes.")
+        if len(self.pairs_L) != len(self.pairs_R):
+            raise ValueError("Number of pairs have to be the same.")
+        if self.shortcuts is None:
+            raise ValueError("Shortcuts have to be implemented by the sub classes.")
+        
         self.outer_hull = cv2.convexHull(consts.FACE_COORDS, returnPoints=True).reshape(-1, 2)
         self.outer_hull = np.array([abs_to_rel(x, y, (4096, 4096)) for x, y in self.outer_hull])
         self.outer_dict = {f"O{i}": (x, y) for i, (x, y) in enumerate(self.outer_hull)}
@@ -44,16 +54,9 @@ class Scheme(abc.ABC):
             if not self._check_value(emg_value):
                 raise ValueError(f"EMG value {emg_value} for {emg_name} is not valid.")
             del temp_locations[emg_name]
+
     def _check_value(self, emg_value: float) -> bool:
         return emg_value >= 0
-
-    @abc.abstractmethod
-    def save_locs(self) -> None:
-        pass
-
-    @abc.abstractmethod
-    def load_locs(self) -> dict:
-        pass
 
     def mirror(self, emg_values: dict[str, float]) -> tuple[dict[str, float], dict[str, float]]:
         """Mirror the EMG values.
@@ -94,19 +97,31 @@ class Kuramoto(Scheme):
     # given as (L, R)
     pairs_L = ["E2", "E4", "E6", "E8", "E10", "E14", "E16", "E18"]
     pairs_R = ["E1", "E3", "E5", "E7", "E9", "E13", "E15", "E17"]
-    shortcuts = {n : n.replace("E", "K") for n in pairs_L + pairs_R}
+    shortcuts = {n: n.replace("E", "K") for n in pairs_L + pairs_R}
 
-    def save_locs(self) -> None:
-        p = Path(__file__).parent / "locations_kuramoto.json"
-        p.write_text(json.dumps(self.locations, indent=4))
-
-        # save the current version of the file
-        p = Path(__file__).parent / f"locations_kuramoto_{datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.json"
-        p.write_text(json.dumps(self.locations, indent=4))
-
-    def load_locs(self) -> None:
-        p = Path(__file__).parent / "locations_kuramoto.json"
-        return json.loads(p.read_text())
+    # fmt: off
+    locations = {
+        "E1":  [-20.0,  66.0],
+        "E2":  [ 20.0,  66.0],
+        "E3":  [-32.0,  56.0],
+        "E4":  [ 32.0,  56.0],
+        "E5":  [-44.0,  13.0],
+        "E6":  [ 44.0,  13.0],
+        "E7":  [-25.0,  -9.0],
+        "E8":  [ 25.0,  -9.0],
+        "E9":  [-20.0, -67.0],
+        "E10": [ 20.0, -67.0],
+        "E13": [-63.0,  40.0],
+        "E14": [ 63.0,  40.0],
+        "E15": [-58.0,   6.0],
+        "E16": [ 59.0,   6.0],
+        "E17": [-72.0, -50.0],
+        "E18": [ 72.0, -50.0],
+        "E19": [  0.0,  47.0],
+        "E20": [  0.0, -26.0],
+        "E24": [  0.0,  26.0],
+    }
+    # fmt: on
 
 
 class Fridlund(Scheme):
@@ -136,15 +151,29 @@ class Fridlund(Scheme):
         "Zyg li": "F20",
         "Zyg re": "F19",
     }
-
-    def save_locs(self) -> None:
-        p = Path(__file__).parent / "locations_fridlund.json"
-        p.write_text(json.dumps(self.locations, indent=4))
-
-        # save the current version of the file
-        p = Path(__file__).parent / f"locations_fridlund_{datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.json"
-        p.write_text(json.dumps(self.locations, indent=4))
-
-    def load_locs(self) -> None:
-        p = Path(__file__).parent / "locations_fridlund.json"
-        return json.loads(p.read_text())
+    # fmt: off
+    locations = {
+        "DAO li": [26.0, -69.0],
+        "DAO re": [-26.0, -69.0],
+        "OrbOr li": [21.0, -52.0],
+        "OrbOr re": [-21.0, -52.0],
+        "Ment li": [6.0, -65.0],
+        "Ment re": [-6.0, -65.0],
+        "Mass li": [70.0, -50],
+        "Mass re": [-70.0, -50],
+        "Zyg li": [53.0, -23],
+        "Zyg re": [-53.0, -23],
+        "Llsup li": [28.0, -12.0],
+        "Llsup re": [-28.0, -12.0],
+        "OrbOc li": [42.0, 10.0],
+        "OrbOc re": [-42.0, 10.0],
+        "lat Front li": [32.0, 60.0],
+        "lat Front re": [-32.0, 60.0],
+        "med Front li": [10, 65.0],
+        "med Front re": [-10, 65.0],
+        "Corr li": [22.0, 52.0],
+        "Corr re": [-22.0, 52.0],
+        "Deprsup li": [9.0, 49.0],
+        "Deprsup re": [-9.0, 49.0],
+    }
+    # fmt: on
