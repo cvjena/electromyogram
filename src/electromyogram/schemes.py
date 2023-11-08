@@ -1,4 +1,4 @@
-__all__ = ["Scheme", "Kuramoto", "Fridlund", "AU"]
+__all__ = ["Scheme", "Kuramoto", "Fridlund", "FACS"]
 
 import abc
 from typing import Optional
@@ -177,7 +177,7 @@ class Fridlund(Scheme):
     }
     # fmt: on
     
-class AU(Scheme):
+class FACS(Scheme):
     # which are used for example in OpenFace2 [1,2,4,5,6,7,9,10,12,14,15,17,20,23,25,26]
     locations = {
         "AU1_R": (-10.0, 65.0),

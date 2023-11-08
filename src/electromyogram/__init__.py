@@ -3,7 +3,7 @@ __all__ = [
     "plot_locations",
     "Kuramoto",
     "Fridlund",
-    "AU",
+    "FACS",
     "Scheme",
     "colorize",
     "get_colormap",
@@ -18,4 +18,4 @@ from electromyogram.plot import (
     postprocess,
 )
 
-from electromyogram.schemes import AU, Fridlund, Kuramoto, Scheme
+from electromyogram.schemes import FACS, Fridlund, Kuramoto, Scheme
