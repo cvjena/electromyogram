@@ -1,20 +1,20 @@
 __all__ = ["interpolate", "plot_locations", "colorize", "get_colormap", "postprocess"]
 
 
-from dataclasses import dataclass
 import math
-from typing import Optional, Type, Union
+from dataclasses import dataclass
 from pathlib import Path
+from typing import Optional, Type, Union
 
 import cv2
 import h5py
 import numpy as np
-from matplotlib import pyplot as plt
 from scipy import interpolate as interp
 
 from .consts import parula_colormap
 from .schemes import Scheme
 from .utils import rel_to_abs
+
 
 @dataclass
 class FaceModel:
@@ -93,7 +93,7 @@ def plot_locations(
     radius_i = int((radius * 0.8) * scale_factor)
 
     for emg_name, emg_loc in scheme.locations.items():
-        name = scheme.shortcuts.get(emg_name, emg_name)
+        name = scheme.mapping.get(emg_name, emg_name)
         x, y = rel_to_abs(emg_loc[0], emg_loc[1], size=shape)
 
         canvas = cv2.circle(canvas, (x, y), radius=radius_o, color=( 0, 0, 0),   thickness=-1, lineType=lineType)
@@ -120,18 +120,19 @@ def interpolate(
     vmax: Optional[float] = None,
     mirror: bool = False,
     mirror_plane_width: int = 2,
+    missing_value: float = 0.0,
 ) -> Union[np.ndarray, tuple[np.ndarray, np.ndarray, np.ndarray]]:
     if not mirror:
-        return __interpolate(scheme, emg_values, shape, vmin, vmax)
+        return __interpolate(scheme, emg_values, shape, vmin, vmax, missing_value)
 
     emg_values_mirrored_l, emg_values_mirrored_r = scheme.mirror(emg_values)
 
     if vmax is None:
         vmax = max(emg_values.values())
 
-    interpolation_n = __interpolate(scheme, emg_values, shape, vmin, vmax)
-    interpolation_l = __interpolate(scheme, emg_values_mirrored_l, shape, vmin, vmax)
-    interpolation_r = __interpolate(scheme, emg_values_mirrored_r, shape, vmin, vmax)
+    interpolation_n = __interpolate(scheme, emg_values,            shape, vmin, vmax, missing_value)
+    interpolation_l = __interpolate(scheme, emg_values_mirrored_l, shape, vmin, vmax, missing_value)
+    interpolation_r = __interpolate(scheme, emg_values_mirrored_r, shape, vmin, vmax, missing_value)
 
     # draw a vertical line in the mirrored images to indicate the mirror plane
     middle_slice = slice(shape[1] // 2 - mirror_plane_width, shape[1] // 2 + mirror_plane_width)
@@ -147,6 +148,7 @@ def __interpolate(
     shape: tuple[int, int] = (512, 512),
     vmin: float = 0.0,
     vmax: Optional[float] = None,
+    missing_value: float = 0.0,
 ) -> np.ndarray:
     """Interpolate the EMG values to a 2D canvas.
 
@@ -169,15 +171,16 @@ def __interpolate(
         The maximum value of the EMG values. Defaults to None and will be set to the maximum value of the EMG values.
     """
 
-    scheme.valid(emg_values) # this raises a ValueError if the values are not valid
-
+    emg_values = scheme.validify(emg_values, missing_value=missing_value)
     canvas = np.zeros(shape, dtype=np.float32)
+    outer_dict = {f"O{i}" : (x,y) for i, (x,y) in enumerate(face_model.get_outer(shape=shape))}
+    
     keys_sorted_semg = sorted(scheme.locations.keys())
-    keys_sorted_hull = sorted(scheme.outer_dict.keys())
+    keys_sorted_hull = sorted(outer_dict.keys())
 
-    # # get the values for each location
-    xy = np.array([scheme.locations[k] for k in keys_sorted_semg] + [scheme.outer_dict[k] for k in keys_sorted_hull])
-    v = np.array([emg_values[k] for k in keys_sorted_semg] + [0] * len(keys_sorted_hull))
+    # get the values for each location
+    v  = np.array([emg_values[k][0] for k in keys_sorted_semg] + [0] * len(keys_sorted_hull))
+    xy = np.array([emg_values[k][1] for k in keys_sorted_semg] + [outer_dict[k] for k in keys_sorted_hull])
 
     vmin = vmin or v.min()
     vmax = vmax or v.max()
@@ -185,7 +188,7 @@ def __interpolate(
 
     # prepare the data for RBF interpolation
     p = xy.reshape(-1, 2)
-    v = v.reshape(-1, 1)
+    v =  v.reshape(-1, 1)
     x_grid = np.mgrid[-100 : 100 : canvas.shape[0] * 1j, -100 : 100 : canvas.shape[1] * 1j].reshape(2, -1).T
     Z = interp.RBFInterpolator(p, v, kernel="thin_plate_spline", smoothing=0.0)(x_grid)
     # reshape the data to the correct shape, and transpose it such it is rotated 90 degrees counter-clockwise
