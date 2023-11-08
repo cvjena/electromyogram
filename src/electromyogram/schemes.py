@@ -3,13 +3,6 @@ __all__ = ["Scheme", "Kuramoto", "Fridlund"]
 import abc
 from typing import Optional
 
-import cv2
-import numpy as np
-
-from . import consts
-from .utils import abs_to_rel
-
-
 class Scheme(abc.ABC):
     """Scheme for plotting the EMG values on a 2D canvas.
 
@@ -32,10 +25,6 @@ class Scheme(abc.ABC):
         if self.locations is None:
             raise ValueError("Locations have to be implemented by the sub classes.")
  
-        self.outer_hull = cv2.convexHull(consts.FACE_COORDS, returnPoints=True).reshape(-1, 2)
-        self.outer_hull = np.array([abs_to_rel(x, y, (4096, 4096)) for x, y in self.outer_hull])
-        self.outer_dict = {f"O{i}": (x, y) for i, (x, y) in enumerate(self.outer_hull)}
-
     def validify(
         self, 
         emg_values: dict[str, float],

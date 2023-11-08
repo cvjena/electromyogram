@@ -1,10 +1,10 @@
 __all__ = ["interpolate", "plot_locations", "colorize", "get_colormap", "postprocess"]
 
 
-from dataclasses import dataclass
 import math
-from typing import Optional, Type, Union
+from dataclasses import dataclass
 from pathlib import Path
+from typing import Optional, Type, Union
 
 import cv2
 import h5py
@@ -14,6 +14,7 @@ from scipy import interpolate as interp
 from .consts import parula_colormap
 from .schemes import Scheme
 from .utils import rel_to_abs
+
 
 @dataclass
 class FaceModel:
@@ -171,14 +172,15 @@ def __interpolate(
     """
 
     emg_values = scheme.validify(emg_values, missing_value=missing_value)
-
     canvas = np.zeros(shape, dtype=np.float32)
+    outer_dict = {f"O{i}" : (x,y) for i, (x,y) in enumerate(face_model.get_outer(shape=shape))}
+    
     keys_sorted_semg = sorted(scheme.locations.keys())
-    keys_sorted_hull = sorted(scheme.outer_dict.keys())
+    keys_sorted_hull = sorted(outer_dict.keys())
 
     # get the values for each location
     v  = np.array([emg_values[k][0] for k in keys_sorted_semg] + [0] * len(keys_sorted_hull))
-    xy = np.array([emg_values[k][1] for k in keys_sorted_semg] + [scheme.outer_dict[k] for k in keys_sorted_hull])
+    xy = np.array([emg_values[k][1] for k in keys_sorted_semg] + [outer_dict[k] for k in keys_sorted_hull])
 
     vmin = vmin or v.min()
     vmax = vmax or v.max()
