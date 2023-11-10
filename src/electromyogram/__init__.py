@@ -7,7 +7,8 @@ __all__ = [
     "Scheme",
     "colorize",
     "get_colormap",
-    "postprocess"
+    "postprocess",
+    "Blendshapes"
 ]
 
 from electromyogram.plot import (
@@ -18,4 +19,4 @@ from electromyogram.plot import (
     postprocess,
 )
 
-from electromyogram.schemes import FACS, Fridlund, Kuramoto, Scheme
+from electromyogram.schemes import FACS, Fridlund, Kuramoto, Scheme, Blendshapes
