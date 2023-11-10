@@ -1,4 +1,4 @@
-__all__ = ["Scheme", "Kuramoto", "Fridlund", "FACS"]
+__all__ = ["Scheme", "Kuramoto", "Fridlund", "FACS", "Blendshapes"]
 
 import abc
 from typing import Optional
@@ -229,4 +229,93 @@ class FACS(Scheme):
         
         "AU26_R": (-70.0, -50.0),        
         "AU26_L": ( 70.0, -50.0),
+    }
+
+class Blendshapes(Scheme):
+    # X  1 - browDownLeft
+    # X  2 - browDownRight
+    # X  3 - browInnerUp
+    # X  4 - browOuterUpLeft
+    # X  5 - browOuterUpRight
+    # X  6 - cheekPuff
+    # X  7 - cheekSquintLeft
+    # X  8 - cheekSquintRight
+    # X  9 - eyeBlinkLeft
+    # X 10 - eyeBlinkRight
+    # X 11 - eyeLookDownLeft
+    # X 12 - eyeLookDownRight
+    # - 13 - eyeLookInLeft
+    # - 14 - eyeLookInRight
+    # - 15 - eyeLookOutLeft
+    # - 16 - eyeLookOutRight
+    # X 17 - eyeLookUpRight
+    # X 18 - eyeLookUpRight
+    # X 19 - eyeSquintLeft
+    # X 20 - eyeSquintRight
+    # X 21 - eyeWideLeft
+    # X 22 - eyeWideRight
+    # X 23 - jawForward
+    # - 24 - jawLeft
+    # X 25 - jawOpen
+    # - 26 - jawRight
+    # X 27 - mouthClose
+    # X 28 - mouthDimpleLeft
+    # X 29 - mouthDimpleRight
+    # X 30 - mouthFrownLeft
+    # X 31 - mouthFrownRight
+    # X 32 - mouthFunnel
+    # X 33 - mouthLeft
+    # - 34 - mouthLowerDownLeft
+    # - 35 - mouthLowerDownRight
+    # X 36 - mouthPressLeft
+    # X 37 - mouthPressRight
+    # X 38 - mouthPucker
+    # X 39 - mouthRight
+    # X 40 - mouthRollLower
+    # X 41 - mouthRollUpper
+    # X 42 - mouthShrugLower
+    # X 43 - mouthShrugUpper
+    # X 44 - mouthSmileLeft
+    # X 45 - mouthSmileRight
+    # X 46 - mouthStretchLeft
+    # X 47 - mouthStretchRight
+    # - 48 - mouthUpperUpLeft
+    # - 49 - mouthUpperUpRight
+    # X 50 - noseSneerLeft
+    # X 51 - noseSneerRight
+    # X 52 - tongueOut
+    locations = {
+        "browInnerUp": (0.0, 65.0),
+        
+        "browOuterUpRight": (-32.0, 60.0),
+        "browOuterUpLeft":  ( 32.0, 60.0),
+        
+        "browDownRight": ( -9.0, 49.0),
+        "browDownLeft":  (  9.0, 49.0),
+
+        "cheekSquintRight": (-42.0, 10.0),
+        "cheekSquintLeft":  ( 42.0, 10.0),
+        
+        "noseSneerRight": (-16.0, -0.0),
+        "noseSneerLeft":  ( 16.0, -0.0),
+        
+        "mouthShrugUpper": (0.0, -25.0),
+        
+        "mouthRight": (-27.0, -38.0),
+        "mouthLeft":  ( 27.0, -38.0),
+        
+        "mouthSmileRight": (-53.0, -8.0),
+        "mouthSmileLeft":  ( 53.0, -8.0),
+        
+        "mouthDimpleRight": (-48.0, -24.0),
+        "mouthDimpleLeft":  ( 48.0, -24.0),
+        
+        "mouthFrownRight": (-26.0, -69.0),
+        "mouthFrownLeft":  ( 26.0, -69.0),
+        
+        "jawForward": (-0.0, -65.0),
+
+        "mouthStretchRight": (-53.0, -42.0),
+        "mouthStretchLeft":  ( 53.0, -42.0),
+
     }
