@@ -300,6 +300,7 @@ def postprocess(
     triangles_alpha: float = 0.3,
     invert: bool = False,
     scheme: Optional[Scheme] = None,
+    fill_value: int = 255,
 ) -> np.ndarray:
     powermap = powermap.copy()
     
@@ -327,7 +328,7 @@ def postprocess(
     if remove_outer:
         hull = cv2.convexHull(points, returnPoints=True)
         mask = cv2.drawContours(np.zeros(powermap.shape[:2]), [hull], 0, 1, -1)
-        powermap[mask == 0] = 255 if powermap.ndim != 3 else [255, 255, 255]
+        powermap[mask == 0] = fill_value if powermap.ndim != 3 else [fill_value, fill_value, fill_value]
         
     if draw_locations:
         assert scheme is not None, "scheme must not be None if draw_locations is True"
