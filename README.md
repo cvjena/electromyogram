@@ -92,6 +92,22 @@ MIT License
 
 If you use our work, please cite us:
 
+
+```
+Büchner, T., Sickert, S., Graßme, R., Anders, C., Guntinas-Lichius, O., Denzler, J. (2023). Using 2D and 3D Face Representations to Generate Comprehensive Facial Electromyography Intensity Maps. In: Bebis, G., et al. Advances in Visual Computing. ISVC 2023. Lecture Notes in Computer Science, vol 14362. Springer, Cham. https://doi.org/10.1007/978-3-031-47966-3_11
+```
+
+or as bib entry
 ```bibtex
-under publication, please wait a bit :)
+@InProceedings{10.1007/978-3-031-47966-3_11,
+    author="B{\"u}chner, Tim and Sickert, Sven and Gra{\ss}me, Roland and Anders, Christoph and Guntinas-Lichius, Orlando and Denzler, Joachim",
+    title="Using 2D and 3D Face Representations to Generate Comprehensive Facial Electromyography Intensity Maps",
+    booktitle="Advances in Visual Computing",
+    year="2023",
+    publisher="Springer Nature Switzerland",
+    address="Cham",
+    pages="136--147",
+    isbn="978-3-031-47966-3"
+}
+
 ```
